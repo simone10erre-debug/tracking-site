@@ -6,145 +6,299 @@
     <title>Universal Shipping Tracking</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #ffffff; color: #1a1a1a; margin: 0; padding: 0; }
-        .btn-green { background-color: #5d8574; }
-        .text-green { color: #5d8574; }
-        .tab-active { border-bottom: 2px solid #5d8574; color: #5d8574; font-weight: 700; }
-        .counter { background-color: #f1f3f5; color: #868e96; border-radius: 99px; padding: 2px 8px; font-size: 11px; margin-left: 6px; }
         
-        /* Card style per somigliare all'immagine */
-        .shipment-card {
-            border: 1px solid #f0f0f0;
-            border-radius: 1.5rem;
-            transition: all 0.2s ease;
+        :root {
+            --primary: #5d8574;
+            --bg: #ffffff;
+            --gray-light: #f8f9fa;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Forza il posizionamento degli elementi */
+        .main-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .logo-box {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-img {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+        }
+
+        .title-text h1 {
+            font-weight: 900;
+            text-transform: uppercase;
+            font-size: 1.1rem;
+            letter-spacing: -0.02em;
+            margin: 0;
+        }
+
+        .title-text p {
+            font-size: 10px;
+            font-weight: 700;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            margin: 0;
+        }
+
+        /* Stile Tabs */
+        .tabs-container {
+            display: flex;
+            gap: 30px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 30px;
+        }
+
+        .tab-btn {
+            padding-bottom: 15px;
+            font-size: 14px;
+            color: #9ca3af;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            display: flex;
+            align-items: center;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+            font-weight: 700;
+        }
+
+        .badge {
+            background: #f1f3f5;
+            color: #868e96;
+            border-radius: 20px;
+            padding: 2px 8px;
+            font-size: 11px;
+            margin-left: 8px;
+        }
+
+        .active .badge {
+            background: #e6f0eb;
+            color: var(--primary);
+        }
+
+        /* Card spedizione */
+        .ship-card {
+            background: white;
+            border: 1px solid #f1f1f1;
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            transition: all 0.2s;
             cursor: pointer;
         }
-        .shipment-card:hover {
-            border-color: #5d8574;
-            background-color: #fafafa;
+
+        .ship-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+
+        .card-icon {
+            width: 45px;
+            height: 45px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+        }
+
+        /* Modal */
+        #addModal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            width: 100%;
+            max-width: 350px;
+            text-align: center;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border: 1px solid #eee;
+            margin-bottom: 15px;
+            outline: none;
+        }
+
+        .save-btn {
+            background: var(--primary);
+            color: white;
+            width: 100%;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
     </style>
 </head>
-<body class="p-6 md:p-12">
+<body>
 
-    <div class="max-w-3xl mx-auto">
-        <header class="flex justify-between items-center mb-10">
-            <div class="flex items-center gap-4">
-                <img src="logo.png" alt="Logo" class="w-12 h-12 object-contain" onerror="this.outerHTML='<div class=\"w-12 h-12 btn-green rounded-xl flex items-center justify-center text-white text-2xl shadow-lg\"><i class=\"fas fa-box\"></i></div>'">
-                <div>
-                    <h1 class="text-xl font-black uppercase tracking-tight">Universal Shipping Tracking</h1>
-                    <p class="text-gray-400 text-[10px] font-bold tracking-[0.2em] uppercase">Global Logistics System</p>
+    <div class="main-container">
+        <div class="header-flex">
+            <div class="logo-box">
+                <img src="logo.png" alt="Logo" class="logo-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/679/679821.png'">
+                <div class="title-text">
+                    <h1>Universal Shipping Tracking</h1>
+                    <p>Global Logistics System</p>
                 </div>
             </div>
-            <button onclick="openModal()" class="w-12 h-12 btn-green text-white rounded-full flex items-center justify-center shadow-lg hover:scale-105 active:scale-90 transition-all">
+            <button onclick="showModal()" class="w-12 h-12 bg-[#5d8574] text-white rounded-full shadow-lg flex items-center justify-center">
                 <i class="fas fa-plus"></i>
             </button>
-        </header>
-
-        <div class="flex gap-8 border-b border-gray-100 mb-8">
-            <button onclick="switchTab('active')" id="tab-active" class="tab-active pb-4 flex items-center text-sm">In progress <span id="count-active" class="counter">0</span></button>
-            <button onclick="switchTab('archived')" id="tab-archived" class="pb-4 text-gray-400 flex items-center text-sm">Archive <span id="count-archived" class="counter">0</span></button>
         </div>
 
-        <div class="relative mb-8">
-            <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-300"></i>
-            <input type="text" id="search" onkeyup="renderList()" placeholder="Search shipments..." class="w-full bg-gray-50 border-none py-4 pl-14 pr-6 rounded-2xl outline-none text-sm">
+        <div class="tabs-container">
+            <div id="tab-active" onclick="setTab('active')" class="tab-btn active">
+                In progress <span id="count-active" class="badge">0</span>
+            </div>
+            <div id="tab-archived" onclick="setTab('archived')" class="tab-btn">
+                Archive <span id="count-archived" class="badge">0</span>
+            </div>
         </div>
 
-        <div id="list" class="space-y-4"></div>
+        <div id="list-container">
+            </div>
     </div>
 
-    <div id="add-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[50] hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-[2.5rem] w-full max-w-sm p-10 shadow-2xl">
-            <h3 class="font-black text-xl mb-8 text-center uppercase tracking-tight">New Shipment</h3>
-            <div class="space-y-4">
-                <input type="text" id="desc" placeholder="What's inside? (e.g. iPhone)" class="w-full p-4 bg-gray-50 rounded-xl border-none outline-none">
-                <input type="text" id="code" placeholder="Tracking Number" class="w-full p-4 bg-gray-50 rounded-xl border-none outline-none font-mono uppercase">
-                <button onclick="save()" class="w-full py-4 btn-green text-white rounded-xl font-black uppercase tracking-widest shadow-lg mt-4">Add Shipment</button>
-                <button onclick="closeModal()" class="w-full text-gray-400 font-bold text-[10px] uppercase py-2">Close</button>
-            </div>
+    <div id="addModal">
+        <div class="modal-content">
+            <h2 class="font-black uppercase mb-6">New Shipment</h2>
+            <input type="text" id="in-desc" placeholder="Product Description">
+            <input type="text" id="in-code" placeholder="Tracking Number" style="text-transform: uppercase; font-family: monospace;">
+            <button onclick="save()" class="save-btn">Save</button>
+            <button onclick="hideModal()" class="text-gray-400 text-[10px] font-bold uppercase mt-4">Cancel</button>
         </div>
     </div>
 
     <script>
-        let db = JSON.parse(localStorage.getItem('ship_db_vfinal')) || [];
+        let db = JSON.parse(localStorage.getItem('final_v100')) || [];
         let currentTab = 'active';
 
-        function switchTab(t) {
+        function setTab(t) {
             currentTab = t;
-            document.getElementById('tab-active').className = t === 'active' ? 'tab-active pb-4 flex items-center text-sm' : 'pb-4 text-gray-400 flex items-center text-sm';
-            document.getElementById('tab-archived').className = t === 'archived' ? 'tab-active pb-4 flex items-center text-sm' : 'pb-4 text-gray-400 flex items-center text-sm';
-            renderList();
+            document.getElementById('tab-active').classList.toggle('active', t === 'active');
+            document.getElementById('tab-archived').classList.toggle('active', t === 'archived');
+            render();
         }
+
+        function showModal() { document.getElementById('addModal').style.display = 'flex'; }
+        function hideModal() { document.getElementById('addModal').style.display = 'none'; }
 
         function save() {
-            const d = document.getElementById('desc').value;
-            const c = document.getElementById('code').value.toUpperCase();
-            if(!d || !c) return;
-            db.unshift({ id: Date.now(), desc: d, code: c, archived: false });
-            localStorage.setItem('ship_db_vfinal', JSON.stringify(db));
-            closeModal();
-            renderList();
+            const desc = document.getElementById('in-desc').value;
+            const code = document.getElementById('in-code').value.toUpperCase();
+            if(!desc || !code) return;
+            
+            db.unshift({ id: Date.now(), desc, code, arch: false });
+            localStorage.setItem('final_v100', JSON.stringify(db));
+            
+            document.getElementById('in-desc').value = '';
+            document.getElementById('in-code').value = '';
+            hideModal();
+            render();
         }
 
-        function renderList() {
-            const container = document.getElementById('list');
-            const search = document.getElementById('search').value.toLowerCase();
+        function render() {
+            const container = document.getElementById('list-container');
+            const activeCount = db.filter(x => !x.arch).length;
+            const archCount = db.filter(x => x.arch).length;
             
-            document.getElementById('count-active').innerText = db.filter(x => !x.archived).length;
-            document.getElementById('count-archived').innerText = db.filter(x => x.archived).length;
+            document.getElementById('count-active').innerText = activeCount;
+            document.getElementById('count-archived').innerText = archCount;
 
-            const filtered = db.filter(x => 
-                (x.desc.toLowerCase().includes(search) || x.code.toLowerCase().includes(search)) &&
-                (currentTab === 'archived' ? x.archived : !x.archived)
-            );
+            const items = db.filter(x => currentTab === 'active' ? !x.arch : x.arch);
 
-            container.innerHTML = filtered.length ? filtered.map(x => `
-                <div class="shipment-card bg-white p-6 flex justify-between items-center" onclick="track('${x.code}')">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-green shadow-sm">
-                            <i class="fas fa-truck-fast"></i>
-                        </div>
+            if(items.length === 0) {
+                container.innerHTML = `<p style="text-align:center; color:#ccc; margin-top:50px; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:2px;">No shipments</p>`;
+                return;
+            }
+
+            container.innerHTML = items.map(x => `
+                <div class="ship-card" onclick="openTrack('${x.code}')">
+                    <div style="display:flex; align-items:center; gap:15px;">
+                        <div class="card-icon"><i class="fas fa-truck"></i></div>
                         <div>
-                            <h3 class="font-bold text-sm text-gray-800">${x.desc}</h3>
-                            <p class="text-[10px] font-mono text-gray-400 font-bold uppercase tracking-widest mt-1">${x.code}</p>
+                            <div style="font-weight:700; font-size:14px; color:#333;">${x.desc}</div>
+                            <div style="font-size:10px; font-weight:700; color:#aaa; font-family:monospace; text-transform:uppercase;">${x.code}</div>
                         </div>
                     </div>
-                    <div class="flex gap-4" onclick="event.stopPropagation()">
-                        <button onclick="toggleArc(${x.id})" class="text-gray-300 hover:text-blue-500"><i class="fas fa-archive text-xs"></i></button>
-                        <button onclick="del(${x.id})" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash-alt text-xs"></i></button>
+                    <div style="display:flex; gap:10px;" onclick="event.stopPropagation()">
+                        <button onclick="toggleArch(${x.id})" style="color:#ddd;"><i class="fas fa-archive"></i></button>
+                        <button onclick="remove(${x.id})" style="color:#ddd;"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
-            `).join('') : '<div class="text-center py-20 text-gray-300 uppercase text-[10px] font-bold tracking-widest">No shipments here</div>';
+            `).join('');
         }
 
-        function track(code) {
-            // Popup centrale che non viene bloccato e non dà "connessione negata"
-            const w = 500; const h = 750;
-            const left = (screen.width/2)-(w/2); const top = (screen.height/2)-(h/2);
-            window.open(`https://t.17track.net/en#nums=${code}`, 'Tracking', `width=${w},height=${h},top=${top},left=${left},scrollbars=yes`);
+        function openTrack(code) {
+            // METODO POPUP: Sicuro, non sminchia il layout e non dà "connessione negata"
+            const w = 450; const h = 700;
+            const left = (screen.width/2)-(w/2);
+            const top = (screen.height/2)-(h/2);
+            window.open(`https://t.17track.net/en#nums=${code}`, 'Track', `width=${w},height=${h},top=${top},left=${left}`);
         }
 
-        function toggleArc(id) {
+        function toggleArch(id) {
             const i = db.findIndex(x => x.id === id);
-            db[i].archived = !db[i].archived;
-            localStorage.setItem('ship_db_vfinal', JSON.stringify(db));
-            renderList();
+            db[i].arch = !db[i].arch;
+            localStorage.setItem('final_v100', JSON.stringify(db));
+            render();
         }
 
-        function del(id) {
-            if(!confirm("Delete?")) return;
+        function remove(id) {
+            if(!confirm('Delete?')) return;
             db = db.filter(x => x.id !== id);
-            localStorage.setItem('ship_db_vfinal', JSON.stringify(db));
-            renderList();
+            localStorage.setItem('final_v100', JSON.stringify(db));
+            render();
         }
 
-        function openModal() { document.getElementById('add-modal').classList.remove('hidden'); }
-        function closeModal() { document.getElementById('add-modal').classList.add('hidden'); }
-        
-        renderList();
+        render();
     </script>
 </body>
 </html>
