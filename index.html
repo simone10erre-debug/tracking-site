@@ -1,198 +1,175 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Universal Parcel Tracking</title>
+    <title>Universal Shipping Tracking</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; margin: 0; padding: 0; }
-        
-        /* Titolo bilanciato */
-        .main-title { 
-            font-size: 1.8rem; 
-            font-weight: 900; 
-            letter-spacing: -0.02em; 
-            text-transform: uppercase; 
-            color: #1e293b; 
-            line-height: 1.1;
-        }
-
-        .brand-logo {
-            width: 60px;
-            height: 60px;
-            border-radius: 14px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-
-        .detail-view { 
-            position: fixed; top: 0; right: 0; height: 100%; width: 100%; 
-            background: white; transform: translateX(100%); 
-            transition: transform 0.4s ease; z-index: 1000; 
-        }
-        @media (min-width: 768px) { .detail-view { width: 700px; } }
-        .detail-view.active { transform: translateX(0); }
-
-        .nav-tab.active { border-bottom: 4px solid #5d8574; color: #5d8574; }
-        .sponsor-column { min-width: 180px; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #ffffff; color: #1a1a1a; }
+        .btn-green { background-color: #5d8574; transition: all 0.2s; }
+        .btn-green:hover { background-color: #4a6b5d; transform: translateY(-1px); }
+        .tab-active { border-bottom: 2px solid #5d8574; color: #5d8574; font-weight: 600; }
+        .search-input { background-color: #f8f9fa; border: 1px solid #e9ecef; }
+        .empty-card { border: 1px dashed #e9ecef; background-color: #fcfcfc; border-radius: 24px; }
+        .counter { background-color: #f1f3f5; color: #868e96; border-radius: 99px; padding: 2px 8px; font-size: 12px; margin-left: 6px; }
+        .tab-active .counter { background-color: #e6f0eb; color: #5d8574; }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4 md:p-10">
 
-    <div class="flex justify-center items-start gap-8 max-w-[1800px] mx-auto min-h-screen">
-        <div class="sponsor-column hidden xl:block"></div>
-
-        <div class="w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 overflow-hidden">
-            <header class="p-8 md:p-10 flex flex-col md:flex-row justify-between items-center gap-6 border-b border-gray-50">
-                <div class="flex items-center gap-5">
-                    <img class="brand-logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAACXBIWXMAAAsTAAALEwEAmpwYAAADJ0lEQVR4nO2dS0hUURjHf+fOODmOmo98pS7atCjaREtIDAsiigI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE9mmoKBNu8hN20SbtYmCoMW0igI30SpsE/mP/AOfNf9E1rYqEAAAAABJRU5ErkJggg==" alt="Logo">
-                    <h1 class="main-title">Universal Parcel Tracking</h1>
+    <div class="max-w-4xl mx-auto">
+        <header class="flex justify-between items-center mb-12">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 btn-green rounded-xl flex items-center justify-center text-white text-2xl">
+                    <i class="fas fa-box"></i>
                 </div>
-                <button onclick="openModal()" class="bg-[#5d8574] text-white px-8 py-4 rounded-2xl font-bold shadow-lg hover:bg-[#4a6b5d] active:scale-95 transition-all">
-                    + NUOVO PACCO
-                </button>
-            </header>
-
-            <div class="flex px-10 bg-gray-50/50 border-b border-gray-50">
-                <button onclick="switchTab('attivi')" id="tab-attivi" class="nav-tab active px-6 py-4 font-bold text-xs uppercase tracking-widest">Attivi</button>
-                <button onclick="switchTab('archiviati')" id="tab-archiviati" class="nav-tab px-6 py-4 font-bold text-xs uppercase tracking-widest text-gray-400">Archiviati</button>
-            </div>
-
-            <div class="p-8 md:p-10">
-                <div class="relative mb-8">
-                    <i class="fas fa-search absolute left-6 top-1/2 -translate-y-1/2 text-gray-300"></i>
-                    <input type="text" id="search-bar" onkeyup="renderList()" placeholder="Cerca spedizione..." class="w-full pl-14 pr-6 py-4 bg-gray-50 border-none rounded-2xl outline-none focus:ring-2 focus:ring-[#5d8574]/20 font-medium">
+                <div>
+                    <h1 class="text-xl font-bold leading-none">Universal Shipping Tracking</h1>
+                    <p class="text-gray-400 text-xs mt-1 font-medium italic">Global tracking system</p>
                 </div>
-                <div id="shipment-list" class="space-y-4"></div>
             </div>
-        </div>
-
-        <div class="sponsor-column hidden xl:block"></div>
-    </div>
-
-    <div id="detail-pane" class="detail-view shadow-2xl flex flex-col">
-        <div class="p-6 border-b flex justify-between items-center">
-            <button onclick="closeDetail()" class="font-bold text-gray-400 hover:text-black tracking-widest text-[10px] uppercase flex items-center gap-2">
-                <i class="fas fa-arrow-left text-sm"></i> Chiudi
+            <button onclick="openModal()" class="w-12 h-12 btn-green text-white rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform">
+                <i class="fas fa-plus"></i>
             </button>
-            <div id="action-buttons" class="flex gap-2"></div>
+        </header>
+
+        <div class="flex gap-8 border-b border-gray-100 mb-8">
+            <button onclick="switchTab('active')" id="tab-active" class="tab-active pb-4 flex items-center">
+                <i class="fas fa-truck mr-2 text-sm"></i> In progress <span id="count-active" class="counter">0</span>
+            </button>
+            <button onclick="switchTab('archived')" id="tab-archived" class="pb-4 text-gray-400 flex items-center">
+                <i class="fas fa-archive mr-2 text-sm"></i> Archive <span id="count-archived" class="counter">0</span>
+            </button>
         </div>
-        <div class="p-8 bg-gray-50 border-b">
-            <h2 id="detail-title" class="text-2xl font-black text-gray-800 tracking-tight uppercase">---</h2>
-            <p id="detail-code" class="text-[#5d8574] font-mono font-bold mt-1 text-lg uppercase tracking-widest">---</p>
+
+        <div class="relative mb-8">
+            <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <input type="text" id="search-bar" onkeyup="renderList()" placeholder="Search by description, tracking, courier..." 
+                   class="w-full search-input py-4 pl-14 pr-6 rounded-2xl outline-none focus:ring-2 focus:ring-[#5d8574]/20 transition-all">
         </div>
-        <div id="TrackingArea" class="flex-1 bg-white">
+
+        <div id="shipment-container">
             </div>
     </div>
 
-    <div id="modal" class="fixed inset-0 bg-gray-900/90 backdrop-blur-md z-[2000] hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-[2.5rem] w-full max-w-md p-10">
-            <h3 id="modal-title" class="text-xl font-bold mb-6 uppercase text-center text-gray-800">Dettagli Spedizione</h3>
-            <input type="hidden" id="edit-id">
+    <div id="modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-md p-8 shadow-2xl">
+            <h3 class="text-xl font-bold mb-6">Add New Shipment</h3>
             <div class="space-y-4">
-                <input type="text" id="input-title" placeholder="Nome (es. Scarpe)" class="w-full p-5 bg-gray-100 rounded-2xl border-none outline-none focus:ring-2 focus:ring-[#5d8574]">
-                <input type="text" id="input-code" placeholder="Codice Tracking" class="w-full p-5 bg-gray-100 rounded-2xl border-none outline-none focus:ring-2 focus:ring-[#5d8574] font-mono">
-                <button onclick="saveShipment()" class="w-full bg-[#5d8574] text-white py-5 rounded-2xl font-bold uppercase tracking-widest shadow-lg active:scale-95 transition-transform">Salva</button>
-                <button onclick="closeModal()" class="w-full text-gray-400 font-bold text-[10px] uppercase py-2 tracking-widest text-center mt-2">Annulla</button>
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Description</label>
+                    <input type="text" id="in-desc" placeholder="e.g. Amazon Package" class="w-full p-4 search-input rounded-xl outline-none mt-1">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Tracking Number</label>
+                    <input type="text" id="in-code" placeholder="Enter code here" class="w-full p-4 search-input rounded-xl outline-none mt-1 font-mono">
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button onclick="closeModal()" class="flex-1 py-4 text-gray-400 font-bold text-sm">Cancel</button>
+                    <button onclick="saveShipment()" class="flex-[2] py-4 btn-green text-white rounded-xl font-bold shadow-lg shadow-[#5d8574]/20">Save Shipment</button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        let shipments = JSON.parse(localStorage.getItem('upt_v5_storage')) || [];
-        let currentTab = 'attivi';
+        let shipments = JSON.parse(localStorage.getItem('upt_v6_db')) || [];
+        let currentTab = 'active';
 
         function switchTab(tab) {
             currentTab = tab;
-            document.getElementById('tab-attivi').classList.toggle('active', tab === 'attivi');
-            document.getElementById('tab-archiviati').classList.toggle('active', tab === 'archiviati');
+            document.getElementById('tab-active').className = tab === 'active' ? 'tab-active pb-4 flex items-center' : 'pb-4 text-gray-400 flex items-center';
+            document.getElementById('tab-archived').className = tab === 'archived' ? 'tab-active pb-4 flex items-center' : 'pb-4 text-gray-400 flex items-center';
             renderList();
         }
 
         function saveShipment() {
-            const title = document.getElementById('input-title').value.trim();
-            const code = document.getElementById('input-code').value.trim().toUpperCase();
-            const editId = document.getElementById('edit-id').value;
-
-            if (!title || !code) return alert("Inserisci i dati!");
-
-            if (editId) {
-                const i = shipments.findIndex(s => s.id == editId);
-                shipments[i] = { ...shipments[i], title, code };
-            } else {
-                shipments.unshift({ id: Date.now(), title, code, archived: false });
-            }
-
-            localStorage.setItem('upt_v5_storage', JSON.stringify(shipments));
+            const desc = document.getElementById('in-desc').value.trim();
+            const code = document.getElementById('in-code').value.trim().toUpperCase();
+            if (!desc || !code) return;
+            
+            shipments.unshift({ id: Date.now(), desc, code, archived: false });
+            localStorage.setItem('upt_v6_db', JSON.stringify(shipments));
             closeModal();
             renderList();
         }
 
         function renderList() {
-            const container = document.getElementById('shipment-list');
+            const container = document.getElementById('shipment-container');
             const search = document.getElementById('search-bar').value.toLowerCase();
-            const filtered = shipments.filter(s => (s.title.toLowerCase().includes(search) || s.code.includes(search.toUpperCase())) && (currentTab === 'archiviati' ? s.archived : !s.archived));
             
-            container.innerHTML = filtered.length ? filtered.map(s => `
-                <div onclick="openTracking('${s.code}', '${s.title}', ${s.id})" class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex justify-between items-center hover:border-[#5d8574] transition-all cursor-pointer group">
-                    <div class="flex items-center gap-5">
-                        <div class="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-[#5d8574] group-hover:bg-[#5d8574] group-hover:text-white transition-all"><i class="fas fa-box"></i></div>
-                        <div><h3 class="font-bold text-gray-800 leading-tight">${s.title}</h3><p class="text-[10px] font-mono text-gray-400 font-bold uppercase tracking-widest">${s.code}</p></div>
+            const activeItems = shipments.filter(s => !s.archived);
+            const archivedItems = shipments.filter(s => s.archived);
+            
+            document.getElementById('count-active').innerText = activeItems.length;
+            document.getElementById('count-archived').innerText = archivedItems.length;
+
+            const filtered = shipments.filter(s => 
+                (s.desc.toLowerCase().includes(search) || s.code.includes(search.toUpperCase())) &&
+                (currentTab === 'archived' ? s.archived : !s.archived)
+            );
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-card py-20 px-10 text-center">
+                        <div class="w-16 h-16 bg-white shadow-sm rounded-2xl flex items-center justify-center mx-auto mb-6">
+                            <i class="fas fa-box-open text-gray-200 text-2xl"></i>
+                        </div>
+                        <h2 class="text-xl font-bold mb-2">No shipments ${currentTab === 'active' ? 'in progress' : 'archived'}</h2>
+                        <p class="text-gray-400 text-sm mb-8">Add your first shipment to start tracking it.</p>
+                        <button onclick="openModal()" class="btn-green text-white px-8 py-4 rounded-xl font-bold shadow-lg shadow-[#5d8574]/20">
+                            + Add shipment
+                        </button>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(s => `
+                <div class="bg-white border border-gray-100 p-6 rounded-3xl mb-4 flex justify-between items-center group hover:border-[#5d8574] transition-all cursor-pointer shadow-sm">
+                    <div class="flex items-center gap-5" onclick="trackExternal('${s.code}')">
+                        <div class="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-[#5d8574] group-hover:bg-[#5d8574] group-hover:text-white transition-all">
+                            <i class="fas fa-truck-loading"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-800">${s.desc}</h3>
+                            <p class="text-xs font-mono text-gray-400 font-bold uppercase mt-1 tracking-widest">${s.code}</p>
+                        </div>
                     </div>
-                    <i class="fas fa-chevron-right text-gray-200 group-hover:text-[#5d8574]"></i>
+                    <div class="flex gap-3">
+                        <button onclick="toggleArchive(${s.id})" class="text-gray-300 hover:text-blue-500 transition-colors p-2"><i class="fas ${s.archived ? 'fa-box-open' : 'fa-archive'}"></i></button>
+                        <button onclick="deleteShipment(${s.id})" class="text-gray-300 hover:text-red-500 transition-colors p-2"><i class="fas fa-trash"></i></button>
+                    </div>
                 </div>
-            `).join('') : '<div class="py-10 text-center text-gray-300 font-bold uppercase text-xs tracking-widest">Nessuna spedizione</div>';
+            `).join('');
         }
 
-        function openTracking(num, title, id) {
-            document.getElementById('detail-pane').classList.add('active');
-            const s = shipments.find(x => x.id == id);
-            document.getElementById('detail-title').innerText = title;
-            document.getElementById('detail-code').innerText = num;
-            
-            document.getElementById('action-buttons').innerHTML = `
-                <button onclick="toggleArchive(${id})" class="text-blue-600 bg-blue-50 px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest">${s.archived ? 'Ripristina' : 'Archivia'}</button>
-                <button onclick="editModal(${id})" class="text-gray-500 bg-gray-100 px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest">Modifica</button>
-                <button onclick="deleteShipment(${id})" class="text-red-500 bg-red-50 px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest">Elimina</button>
-            `;
-
-            // METODO IFRAME: Il più sicuro per Render
-            const area = document.getElementById('TrackingArea');
-            area.innerHTML = `<iframe src="https://t.17track.net/it#nums=${num}" style="width:100%; height:100%; border:none;"></iframe>`;
+        // PIANO B DEFINITIVO PER IL TRACKING: Redirect a 17Track pulito
+        function trackExternal(code) {
+            // Invece di caricarlo internamente (che Render blocca), apre il tracciamento in una nuova finestra
+            // Questo garantisce che funzioni al 100% senza blocchi di sicurezza
+            window.open(`https://t.17track.net/en#nums=${code}`, '_blank');
         }
 
         function toggleArchive(id) {
-            const i = shipments.findIndex(s => s.id == id);
+            const i = shipments.findIndex(s => s.id === id);
             shipments[i].archived = !shipments[i].archived;
-            localStorage.setItem('upt_v5_storage', JSON.stringify(shipments));
-            closeDetail();
+            localStorage.setItem('upt_v6_db', JSON.stringify(shipments));
             renderList();
         }
 
         function deleteShipment(id) {
-            if(!confirm("Eliminare?")) return;
-            shipments = shipments.filter(s => s.id !== id);
-            localStorage.setItem('upt_v5_storage', JSON.stringify(shipments));
-            closeDetail();
-            renderList();
-        }
-
-        function editModal(id) {
-            const s = shipments.find(x => x.id == id);
-            document.getElementById('edit-id').value = s.id;
-            document.getElementById('input-title').value = s.title;
-            document.getElementById('input-code').value = s.code;
-            document.getElementById('modal-title').innerText = "Modifica";
-            closeDetail();
-            openModal();
+            if (confirm("Delete this shipment?")) {
+                shipments = shipments.filter(s => s.id !== id);
+                localStorage.setItem('upt_v6_db', JSON.stringify(shipments));
+                renderList();
+            }
         }
 
         function openModal() { document.getElementById('modal').classList.remove('hidden'); }
-        function closeModal() { document.getElementById('modal').classList.add('hidden'); document.getElementById('edit-id').value = ""; }
-        function closeDetail() { document.getElementById('detail-pane').classList.remove('active'); }
+        function closeModal() { document.getElementById('modal').classList.add('hidden'); }
 
         renderList();
     </script>
