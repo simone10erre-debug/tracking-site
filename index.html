@@ -8,23 +8,22 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #ffffff; color: #1a1a1a; overflow: hidden; }
+        body { font-family: 'Inter', sans-serif; background-color: #ffffff; color: #1a1a1a; }
         .btn-green { background-color: #5d8574; }
         .tab-active { border-bottom: 2px solid #5d8574; color: #5d8574; font-weight: 700; }
         .counter { background-color: #f1f3f5; color: #868e96; border-radius: 99px; padding: 2px 8px; font-size: 11px; margin-left: 6px; }
         
+        /* Pannello Slide-over */
         .panel { 
             position: fixed; top: 0; right: 0; height: 100%; width: 100%; 
             background: white; transform: translateX(100%); 
             transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
-            z-index: 1000; box-shadow: -15px 0 40px rgba(0,0,0,0.08); 
+            z-index: 1000; box-shadow: -20px 0 50px rgba(0,0,0,0.1); 
         }
-        @media (min-width: 768px) { .panel { width: 550px; } }
+        @media (min-width: 768px) { .panel { width: 500px; } }
         .panel.active { transform: translateX(0); }
 
-        /* Loader personalizzato */
-        .loader { border-top-color: #5d8574; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .search-input { background-color: #f8f9fa; border: 1px solid #e9ecef; }
     </style>
 </head>
 <body class="p-6 md:p-12">
@@ -32,9 +31,7 @@
     <div class="max-w-4xl mx-auto">
         <header class="flex justify-between items-center mb-10">
             <div class="flex items-center gap-4">
-                <div class="w-12 h-12 btn-green rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg">
-                    <i class="fas fa-box"></i>
-                </div>
+                <img src="logo.png" alt="Logo" class="w-12 h-12 object-contain" onerror="this.outerHTML='<div class=\"w-12 h-12 btn-green rounded-xl flex items-center justify-center text-white text-2xl shadow-lg\"><i class=\"fas fa-box\"></i></div>'">
                 <div>
                     <h1 class="text-xl font-black uppercase tracking-tight">Universal Shipping Tracking</h1>
                     <p class="text-gray-400 text-[10px] font-bold tracking-[0.2em] uppercase">Global Logistics Network</p>
@@ -50,47 +47,41 @@
             <button onclick="switchTab('archived')" id="tab-archived" class="pb-4 text-gray-400 flex items-center text-sm">Archive <span id="count-archived" class="counter">0</span></button>
         </div>
 
-        <div id="list-container" class="space-y-4 h-[60vh] overflow-y-auto pr-2"></div>
+        <div id="list-container" class="space-y-4"></div>
     </div>
 
     <div id="tracking-panel" class="panel flex flex-col">
-        <div class="p-6 border-b flex items-center justify-between">
+        <div class="p-6 border-b flex items-center justify-between bg-white sticky top-0 z-20">
             <button onclick="closeTracking()" class="text-gray-400 font-bold text-[10px] uppercase tracking-widest flex items-center gap-2">
-                <i class="fas fa-chevron-left"></i> Close
+                <i class="fas fa-arrow-left"></i> Back
             </button>
-            <div id="panel-actions"></div>
+            <div id="panel-meta"></div>
         </div>
         
         <div class="p-8 bg-gray-50 border-b">
-            <h2 id="p-desc" class="text-xl font-black uppercase">---</h2>
+            <h2 id="p-desc" class="text-xl font-black uppercase mb-1">---</h2>
             <p id="p-code" class="text-[#5d8574] font-mono font-bold text-sm tracking-widest">---</p>
         </div>
 
-        <div class="flex-1 relative bg-white overflow-hidden">
-            <div id="loading-overlay" class="absolute inset-0 flex items-center justify-center bg-white z-10">
-                <div class="flex flex-col items-center">
-                    <div class="loader w-10 h-10 border-4 border-gray-100 rounded-full mb-4"></div>
-                    <p class="text-[10px] font-bold uppercase text-gray-400 tracking-widest">Retrieving Data...</p>
-                </div>
-            </div>
-            <iframe id="tracking-iframe" src="" class="w-full h-full border-none" onload="hideLoader()"></iframe>
+        <div class="flex-1 overflow-y-auto">
+            <iframe id="tracking-iframe" src="" class="w-full h-full border-none min-h-[600px]"></iframe>
         </div>
     </div>
 
     <div id="modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[2000] hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-[2.5rem] w-full max-w-sm p-10 shadow-2xl">
-            <h3 class="font-black text-xl mb-8 text-center uppercase tracking-tight">New Tracking</h3>
+            <h3 class="font-black text-xl mb-8 text-center uppercase tracking-tight">New Shipment</h3>
             <div class="space-y-4">
-                <input type="text" id="in-desc" placeholder="Product Name" class="w-full p-5 bg-gray-50 rounded-2xl outline-none border border-gray-100 text-sm">
-                <input type="text" id="in-code" placeholder="Tracking Code" class="w-full p-5 bg-gray-50 rounded-2xl outline-none border border-gray-100 font-mono text-sm uppercase">
-                <button onclick="saveShipment()" class="w-full py-5 btn-green text-white rounded-2xl font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all">Add Shipment</button>
-                <button onclick="closeModal()" class="w-full text-gray-400 font-bold text-[10px] uppercase py-2">Cancel</button>
+                <input type="text" id="in-desc" placeholder="Product Name" class="w-full p-4 bg-gray-50 rounded-xl outline-none border border-gray-100">
+                <input type="text" id="in-code" placeholder="Tracking Number" class="w-full p-4 bg-gray-50 rounded-xl outline-none border border-gray-100 font-mono uppercase">
+                <button onclick="saveShipment()" class="w-full py-4 btn-green text-white rounded-xl font-black uppercase tracking-widest shadow-lg mt-4">Save</button>
+                <button onclick="closeModal()" class="w-full text-gray-400 font-bold text-[10px] uppercase py-2 text-center">Cancel</button>
             </div>
         </div>
     </div>
 
     <script>
-        let shipments = JSON.parse(localStorage.getItem('upt_final_delivery')) || [];
+        let shipments = JSON.parse(localStorage.getItem('upt_final_fixed_v12')) || [];
         let currentTab = 'active';
 
         function switchTab(tab) {
@@ -105,7 +96,7 @@
             const code = document.getElementById('in-code').value.trim().toUpperCase();
             if (!desc || !code) return;
             shipments.unshift({ id: Date.now(), desc, code, archived: false });
-            localStorage.setItem('upt_final_delivery', JSON.stringify(shipments));
+            localStorage.setItem('upt_final_fixed_v12', JSON.stringify(shipments));
             closeModal();
             renderList();
         }
@@ -117,10 +108,10 @@
             const filtered = shipments.filter(s => (currentTab === 'archived' ? s.archived : !s.archived));
             
             container.innerHTML = filtered.length ? filtered.map(s => `
-                <div class="bg-white border border-gray-100 p-6 rounded-[2rem] flex justify-between items-center cursor-pointer hover:border-[#5d8574] transition-all shadow-sm group" onclick="openTracking('${s.code}', '${s.desc}', ${s.id})">
-                    <div class="flex items-center gap-5 flex-1">
-                        <div class="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-[#5d8574] group-hover:bg-[#5d8574] group-hover:text-white transition-all"><i class="fas fa-truck-fast"></i></div>
-                        <div><h3 class="font-bold text-gray-800 text-sm">${s.desc}</h3><p class="text-[10px] font-mono text-gray-400 font-bold uppercase mt-1 tracking-widest">${s.code}</p></div>
+                <div class="bg-white border border-gray-100 p-6 rounded-2xl flex justify-between items-center group hover:border-[#5d8574] cursor-pointer transition-all shadow-sm" onclick="openTracking('${s.code}', '${s.desc}', ${s.id})">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center text-[#5d8574] group-hover:bg-[#5d8574] group-hover:text-white transition-all"><i class="fas fa-truck"></i></div>
+                        <div><h3 class="font-bold text-sm text-gray-800">${s.desc}</h3><p class="text-[10px] font-mono text-gray-400 font-bold uppercase tracking-widest">${s.code}</p></div>
                     </div>
                     <div class="flex gap-2" onclick="event.stopPropagation()">
                         <button onclick="toggleArchive(${s.id})" class="text-gray-200 hover:text-blue-500 p-2"><i class="fas fa-archive text-xs"></i></button>
@@ -133,22 +124,14 @@
         function openTracking(code, desc, id) {
             document.getElementById('p-desc').innerText = desc;
             document.getElementById('p-code').innerText = code;
-            document.getElementById('loading-overlay').style.display = 'flex';
             
-            // ORDERTRACKER EMBED - Funziona senza blocchi SAMEORIGIN
-            document.getElementById('tracking-iframe').src = `https://www.ordertracker.com/track/${code}`;
+            // TRACKINGMORE: Molto meno restrittivo con gli iframe
+            document.getElementById('tracking-iframe').src = `https://www.trackingmore.com/track/en/${code}`;
             
             document.getElementById('tracking-panel').classList.add('active');
-            document.getElementById('panel-actions').innerHTML = `
-                <button onclick="deleteShipment(${id}); closeTracking()" class="text-red-400 text-[10px] font-bold uppercase">Delete</button>
+            document.getElementById('panel-meta').innerHTML = `
+                <button onclick="deleteShipment(${id}); closeTracking()" class="text-red-400 text-[10px] font-bold uppercase tracking-widest">Delete</button>
             `;
-        }
-
-        function hideLoader() { 
-            // Ritardo di sicurezza per assicurarsi che il contenuto sia renderizzato
-            setTimeout(() => {
-                document.getElementById('loading-overlay').style.display = 'none'; 
-            }, 500);
         }
 
         function closeTracking() { 
@@ -159,14 +142,14 @@
         function toggleArchive(id) {
             const i = shipments.findIndex(s => s.id === id);
             shipments[i].archived = !shipments[i].archived;
-            localStorage.setItem('upt_final_delivery', JSON.stringify(shipments));
+            localStorage.setItem('upt_final_fixed_v12', JSON.stringify(shipments));
             renderList();
         }
 
         function deleteShipment(id) {
-            if(!confirm("Delete shipment?")) return;
+            if(!confirm("Delete this?")) return;
             shipments = shipments.filter(s => s.id !== id);
-            localStorage.setItem('upt_final_delivery', JSON.stringify(shipments));
+            localStorage.setItem('upt_final_fixed_v12', JSON.stringify(shipments));
             renderList();
         }
 
