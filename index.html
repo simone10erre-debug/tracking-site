@@ -6,299 +6,160 @@
     <title>Universal Shipping Tracking</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #ffffff; color: #1a1a1a; overflow-x: hidden; }
+        .btn-green { background-color: #5d8574; }
+        .tab-active { border-bottom: 2px solid #5d8574; color: #5d8574; font-weight: 700; }
+        .counter { background-color: #f1f3f5; color: #868e96; border-radius: 99px; padding: 2px 8px; font-size: 11px; margin-left: 6px; }
         
-        :root {
-            --primary: #5d8574;
-            --bg: #ffffff;
-            --gray-light: #f8f9fa;
+        .panel { 
+            position: fixed; top: 0; right: 0; height: 100%; width: 100%; 
+            background: white; transform: translateX(100%); 
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+            z-index: 1000; box-shadow: -15px 0 40px rgba(0,0,0,0.08); 
         }
+        @media (min-width: 768px) { .panel { width: 550px; } }
+        .panel.active { transform: translateX(0); }
 
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: var(--bg);
-            margin: 0;
-            padding: 0;
-        }
-
-        /* Forza il posizionamento degli elementi */
-        .main-container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 40px 20px;
-        }
-
-        .header-flex {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
-        }
-
-        .logo-box {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .logo-img {
-            width: 48px;
-            height: 48px;
-            object-fit: contain;
-        }
-
-        .title-text h1 {
-            font-weight: 900;
-            text-transform: uppercase;
-            font-size: 1.1rem;
-            letter-spacing: -0.02em;
-            margin: 0;
-        }
-
-        .title-text p {
-            font-size: 10px;
-            font-weight: 700;
-            color: #9ca3af;
-            text-transform: uppercase;
-            letter-spacing: 0.2em;
-            margin: 0;
-        }
-
-        /* Stile Tabs */
-        .tabs-container {
-            display: flex;
-            gap: 30px;
-            border-bottom: 1px solid #eee;
-            margin-bottom: 30px;
-        }
-
-        .tab-btn {
-            padding-bottom: 15px;
-            font-size: 14px;
-            color: #9ca3af;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            display: flex;
-            align-items: center;
-        }
-
-        .tab-btn.active {
-            color: var(--primary);
-            border-bottom: 2px solid var(--primary);
-            font-weight: 700;
-        }
-
-        .badge {
-            background: #f1f3f5;
-            color: #868e96;
-            border-radius: 20px;
-            padding: 2px 8px;
-            font-size: 11px;
-            margin-left: 8px;
-        }
-
-        .active .badge {
-            background: #e6f0eb;
-            color: var(--primary);
-        }
-
-        /* Card spedizione */
-        .ship-card {
-            background: white;
-            border: 1px solid #f1f1f1;
-            border-radius: 20px;
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-
-        .ship-card:hover {
-            border-color: var(--primary);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-        }
-
-        .card-icon {
-            width: 45px;
-            height: 45px;
-            background: #f8f9fa;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--primary);
-        }
-
-        /* Modal */
-        #addModal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.5);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            backdrop-filter: blur(4px);
-        }
-
-        .modal-content {
-            background: white;
-            padding: 40px;
-            border-radius: 30px;
-            width: 100%;
-            max-width: 350px;
-            text-align: center;
-        }
-
-        input {
-            width: 100%;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 12px;
-            border: 1px solid #eee;
-            margin-bottom: 15px;
-            outline: none;
-        }
-
-        .save-btn {
-            background: var(--primary);
-            color: white;
-            width: 100%;
-            padding: 15px;
-            border-radius: 12px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+        .loader { border-top-color: #5d8574; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body>
+<body class="p-6 md:p-12">
 
-    <div class="main-container">
-        <div class="header-flex">
-            <div class="logo-box">
-                <img src="logo.png" alt="Logo" class="logo-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/679/679821.png'">
-                <div class="title-text">
-                    <h1>Universal Shipping Tracking</h1>
-                    <p>Global Logistics System</p>
+    <div class="max-w-4xl mx-auto">
+        <header class="flex justify-between items-center mb-10">
+            <div class="flex items-center gap-4">
+                <img src="logo.png" alt="Logo" class="w-12 h-12 object-contain" onerror="this.outerHTML='<div class=\"w-12 h-12 btn-green rounded-xl flex items-center justify-center text-white text-2xl shadow-lg\"><i class=\"fas fa-box\"></i></div>'">
+                <div>
+                    <h1 class="text-xl font-black uppercase tracking-tight">Universal Shipping Tracking</h1>
+                    <p class="text-gray-400 text-[10px] font-bold tracking-[0.2em] uppercase">Global Logistics Network</p>
                 </div>
             </div>
-            <button onclick="showModal()" class="w-12 h-12 bg-[#5d8574] text-white rounded-full shadow-lg flex items-center justify-center">
+            <button onclick="openModal()" class="w-12 h-12 btn-green text-white rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-all">
                 <i class="fas fa-plus"></i>
             </button>
+        </header>
+
+        <div class="flex gap-8 border-b border-gray-100 mb-8">
+            <button onclick="switchTab('active')" id="tab-active" class="tab-active pb-4 flex items-center text-sm">In progress <span id="count-active" class="counter">0</span></button>
+            <button onclick="switchTab('archived')" id="tab-archived" class="pb-4 text-gray-400 flex items-center text-sm">Archive <span id="count-archived" class="counter">0</span></button>
         </div>
 
-        <div class="tabs-container">
-            <div id="tab-active" onclick="setTab('active')" class="tab-btn active">
-                In progress <span id="count-active" class="badge">0</span>
-            </div>
-            <div id="tab-archived" onclick="setTab('archived')" class="tab-btn">
-                Archive <span id="count-archived" class="badge">0</span>
-            </div>
-        </div>
-
-        <div id="list-container">
-            </div>
+        <div id="list-container" class="space-y-4"></div>
     </div>
 
-    <div id="addModal">
-        <div class="modal-content">
-            <h2 class="font-black uppercase mb-6">New Shipment</h2>
-            <input type="text" id="in-desc" placeholder="Product Description">
-            <input type="text" id="in-code" placeholder="Tracking Number" style="text-transform: uppercase; font-family: monospace;">
-            <button onclick="save()" class="save-btn">Save</button>
-            <button onclick="hideModal()" class="text-gray-400 text-[10px] font-bold uppercase mt-4">Cancel</button>
+    <div id="tracking-panel" class="panel flex flex-col">
+        <div class="p-6 border-b flex items-center justify-between">
+            <button onclick="closeTracking()" class="text-gray-400 font-bold text-[10px] uppercase tracking-widest flex items-center gap-2">
+                <i class="fas fa-chevron-left"></i> Back
+            </button>
+            <div id="panel-actions"></div>
+        </div>
+        
+        <div class="p-8 bg-gray-50 border-b">
+            <h2 id="p-desc" class="text-xl font-black uppercase">---</h2>
+            <p id="p-code" class="text-[#5d8574] font-mono font-bold text-sm">---</p>
+        </div>
+
+        <div class="flex-1 relative bg-white overflow-hidden">
+            <div id="loading-overlay" class="absolute inset-0 flex items-center justify-center bg-white z-10">
+                <div class="loader w-10 h-10 border-4 border-gray-100 rounded-full"></div>
+            </div>
+            <iframe id="tracking-iframe" src="" class="w-full h-full border-none" onload="document.getElementById('loading-overlay').style.display='none'"></iframe>
+        </div>
+    </div>
+
+    <div id="modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[2000] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-[2.5rem] w-full max-w-sm p-10 shadow-2xl">
+            <h3 class="font-black text-xl mb-8 text-center uppercase tracking-tight">New Tracking</h3>
+            <div class="space-y-4">
+                <input type="text" id="in-desc" placeholder="Product Name" class="w-full p-4 bg-gray-50 rounded-xl outline-none border border-gray-100">
+                <input type="text" id="in-code" placeholder="Tracking Number" class="w-full p-4 bg-gray-50 rounded-xl outline-none border border-gray-100 font-mono">
+                <button onclick="saveShipment()" class="w-full py-4 btn-green text-white rounded-xl font-black uppercase tracking-widest shadow-lg mt-4">Save</button>
+                <button onclick="closeModal()" class="w-full text-gray-400 font-bold text-[10px] uppercase py-2">Cancel</button>
+            </div>
         </div>
     </div>
 
     <script>
-        let db = JSON.parse(localStorage.getItem('final_v100')) || [];
+        let shipments = JSON.parse(localStorage.getItem('upt_final_v13')) || [];
         let currentTab = 'active';
 
-        function setTab(t) {
-            currentTab = t;
-            document.getElementById('tab-active').classList.toggle('active', t === 'active');
-            document.getElementById('tab-archived').classList.toggle('active', t === 'archived');
-            render();
+        function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById('tab-active').className = tab === 'active' ? 'tab-active pb-4 flex items-center text-sm' : 'pb-4 text-gray-400 flex items-center text-sm';
+            document.getElementById('tab-archived').className = tab === 'archived' ? 'tab-active pb-4 flex items-center text-sm' : 'pb-4 text-gray-400 flex items-center text-sm';
+            renderList();
         }
 
-        function showModal() { document.getElementById('addModal').style.display = 'flex'; }
-        function hideModal() { document.getElementById('addModal').style.display = 'none'; }
-
-        function save() {
-            const desc = document.getElementById('in-desc').value;
-            const code = document.getElementById('in-code').value.toUpperCase();
-            if(!desc || !code) return;
-            
-            db.unshift({ id: Date.now(), desc, code, arch: false });
-            localStorage.setItem('final_v100', JSON.stringify(db));
-            
-            document.getElementById('in-desc').value = '';
-            document.getElementById('in-code').value = '';
-            hideModal();
-            render();
+        function saveShipment() {
+            const desc = document.getElementById('in-desc').value.trim();
+            const code = document.getElementById('in-code').value.trim().toUpperCase();
+            if (!desc || !code) return;
+            shipments.unshift({ id: Date.now(), desc, code, archived: false });
+            localStorage.setItem('upt_final_v13', JSON.stringify(shipments));
+            closeModal();
+            renderList();
         }
 
-        function render() {
+        function renderList() {
             const container = document.getElementById('list-container');
-            const activeCount = db.filter(x => !x.arch).length;
-            const archCount = db.filter(x => x.arch).length;
+            document.getElementById('count-active').innerText = shipments.filter(s => !s.archived).length;
+            document.getElementById('count-archived').innerText = shipments.filter(s => s.archived).length;
+            const filtered = shipments.filter(s => (currentTab === 'archived' ? s.archived : !s.archived));
             
-            document.getElementById('count-active').innerText = activeCount;
-            document.getElementById('count-archived').innerText = archCount;
-
-            const items = db.filter(x => currentTab === 'active' ? !x.arch : x.arch);
-
-            if(items.length === 0) {
-                container.innerHTML = `<p style="text-align:center; color:#ccc; margin-top:50px; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:2px;">No shipments</p>`;
-                return;
-            }
-
-            container.innerHTML = items.map(x => `
-                <div class="ship-card" onclick="openTrack('${x.code}')">
-                    <div style="display:flex; align-items:center; gap:15px;">
-                        <div class="card-icon"><i class="fas fa-truck"></i></div>
-                        <div>
-                            <div style="font-weight:700; font-size:14px; color:#333;">${x.desc}</div>
-                            <div style="font-size:10px; font-weight:700; color:#aaa; font-family:monospace; text-transform:uppercase;">${x.code}</div>
-                        </div>
+            container.innerHTML = filtered.length ? filtered.map(s => `
+                <div class="bg-white border border-gray-100 p-6 rounded-2xl flex justify-between items-center group hover:border-[#5d8574] cursor-pointer shadow-sm" onclick="openTracking('${s.code}', '${s.desc}', ${s.id})">
+                    <div class="flex items-center gap-4 flex-1">
+                        <div class="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center text-[#5d8574] group-hover:bg-[#5d8574] group-hover:text-white transition-all"><i class="fas fa-truck"></i></div>
+                        <div><h3 class="font-bold text-sm text-gray-800">${s.desc}</h3><p class="text-[10px] font-mono text-gray-400 font-bold uppercase tracking-widest">${s.code}</p></div>
                     </div>
-                    <div style="display:flex; gap:10px;" onclick="event.stopPropagation()">
-                        <button onclick="toggleArch(${x.id})" style="color:#ddd;"><i class="fas fa-archive"></i></button>
-                        <button onclick="remove(${x.id})" style="color:#ddd;"><i class="fas fa-trash"></i></button>
+                    <div class="flex gap-2" onclick="event.stopPropagation()">
+                        <button onclick="toggleArchive(${s.id})" class="text-gray-200 hover:text-blue-500 p-2"><i class="fas fa-archive text-xs"></i></button>
+                        <button onclick="deleteShipment(${s.id})" class="text-gray-200 hover:text-red-500 p-2"><i class="fas fa-trash text-xs"></i></button>
                     </div>
                 </div>
-            `).join('');
+            `).join('') : '<div class="py-20 text-center opacity-20 font-black uppercase text-[10px] tracking-widest">No Items</div>';
         }
 
-        function openTrack(code) {
-            // METODO POPUP: Sicuro, non sminchia il layout e non dà "connessione negata"
-            const w = 450; const h = 700;
-            const left = (screen.width/2)-(w/2);
-            const top = (screen.height/2)-(h/2);
-            window.open(`https://t.17track.net/en#nums=${code}`, 'Track', `width=${w},height=${h},top=${top},left=${left}`);
+        function openTracking(code, desc, id) {
+            document.getElementById('p-desc').innerText = desc;
+            document.getElementById('p-code').innerText = code;
+            document.getElementById('loading-overlay').style.display = 'flex';
+            
+            // Usiamo il servizio di tracciamento pubblico di TrackingMore (Inglese)
+            document.getElementById('tracking-iframe').src = `https://www.trackingmore.com/track/en/${code}?inline=true`;
+            
+            document.getElementById('tracking-panel').classList.add('active');
+            document.getElementById('panel-actions').innerHTML = `
+                <button onclick="deleteShipment(${id}); closeTracking()" class="text-red-400 text-[10px] font-bold uppercase">Delete</button>
+            `;
         }
 
-        function toggleArch(id) {
-            const i = db.findIndex(x => x.id === id);
-            db[i].arch = !db[i].arch;
-            localStorage.setItem('final_v100', JSON.stringify(db));
-            render();
+        function closeTracking() { 
+            document.getElementById('tracking-panel').classList.remove('active'); 
+            document.getElementById('tracking-iframe').src = ""; 
         }
 
-        function remove(id) {
-            if(!confirm('Delete?')) return;
-            db = db.filter(x => x.id !== id);
-            localStorage.setItem('final_v100', JSON.stringify(db));
-            render();
+        function toggleArchive(id) {
+            const i = shipments.findIndex(s => s.id === id);
+            shipments[i].archived = !shipments[i].archived;
+            localStorage.setItem('upt_final_v13', JSON.stringify(shipments));
+            renderList();
         }
 
-        render();
+        function deleteShipment(id) {
+            if(!confirm("Delete?")) return;
+            shipments = shipments.filter(s => s.id !== id);
+            localStorage.setItem('upt_final_v13', JSON.stringify(shipments));
+            renderList();
+        }
+
+        function openModal() { document.getElementById('modal').classList.remove('hidden'); }
+        function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+        renderList();
     </script>
 </body>
 </html>
