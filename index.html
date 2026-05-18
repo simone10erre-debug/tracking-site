@@ -9,50 +9,31 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #ffffff;
-            color: #1f2937;
-            margin: 0;
-            padding: 0;
-        }
-
-        .btn-primary { background-color: #5d8574; transition: all 0.2s; }
-        .btn-primary:hover { background-color: #4a6a5d; transform: translateY(-1px); }
+        body { font-family: 'Inter', sans-serif; background-color: #ffffff; color: #1f2937; overflow-x: hidden; }
+        .btn-primary { background-color: #5d8574; }
         
-        .tab-active { 
-            color: #5d8574; 
-            border-bottom: 2px solid #5d8574;
-            font-weight: 700;
+        /* Pannello laterale che scorre */
+        #trackingPanel {
+            position: fixed; top: 0; right: 0; height: 100%; width: 100%;
+            background: white; z-index: 100; transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: -10px 0 30px rgba(0,0,0,0.1);
+        }
+        @media (min-width: 768px) { #trackingPanel { width: 500px; } }
+        #trackingPanel.open { transform: translateX(0); }
+
+        /* Mascheramento: nascondiamo l'header di 17track spostando l'iframe in alto */
+        .iframe-wrapper {
+            width: 100%; height: 100%; overflow: hidden; position: relative;
+        }
+        #trackIframe {
+            width: 100%; height: calc(100% + 150px);
+            border: none; position: absolute; top: -70px; /* Nasconde l'header originale */
         }
 
-        .empty-state-box {
-            border: 1px dashed #e5e7eb;
-            border-radius: 1.5rem;
-            background-color: #f9fafb;
-        }
-
-        .search-input {
-            background-color: #f9fafb;
-            border: 1px solid #f3f4f6;
-        }
-
-        .badge-count {
-            background-color: #f1f3f5;
-            color: #868e96;
-            padding: 2px 10px;
-            border-radius: 999px;
-            font-size: 0.75rem;
-            margin-left: 8px;
-            font-weight: 600;
-        }
-
-        .tab-active .badge-count {
-            background-color: #e6f0eb;
-            color: #5d8574;
-        }
-
-        #modalAdd { background-color: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px); }
+        .tab-active { color: #5d8574; border-bottom: 2px solid #5d8574; font-weight: 700; }
+        .badge-count { background: #f1f3f5; color: #868e96; border-radius: 20px; padding: 2px 8px; font-size: 11px; margin-left: 6px; }
+        .active .badge-count { background: #e6f0eb; color: #5d8574; }
     </style>
 </head>
 <body class="p-6 md:p-12">
@@ -61,14 +42,13 @@
         <header class="flex justify-between items-center mb-10">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 btn-primary rounded-xl flex items-center justify-center shadow-md">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-7 h-7">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" class="w-7 h-7">
                         <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path>
-                        <path d="m3.3 7 8.7 5 8.7-5"></path>
-                        <path d="M12 22V12"></path>
+                        <path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path>
                     </svg>
                 </div>
                 <div>
-                    <h1 class="text-xl font-extrabold leading-tight tracking-tight">Universal Shipping Tracking</h1>
+                    <h1 class="text-xl font-extrabold tracking-tight">Universal Shipping Tracking</h1>
                     <p class="text-gray-400 text-[11px] font-bold uppercase tracking-widest">Global Logistics System</p>
                 </div>
             </div>
@@ -78,136 +58,109 @@
         </header>
 
         <div class="flex gap-8 border-b border-gray-100 mb-8">
-            <button onclick="switchTab('active')" id="tabActive" class="tab-active pb-4 flex items-center text-sm uppercase tracking-tighter">
-                <i class="fas fa-truck text-xs mr-2"></i> In progress <span id="countActive" class="badge-count">0</span>
-            </button>
-            <button onclick="switchTab('archive')" id="tabArchive" class="pb-4 flex items-center text-gray-400 text-sm uppercase tracking-tighter">
-                <i class="fas fa-box-archive text-xs mr-2"></i> Archive <span id="countArchive" class="badge-count">0</span>
-            </button>
-        </div>
-
-        <div class="relative mb-8">
-            <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-300"></i>
-            <input type="text" id="searchBar" onkeyup="renderList()" placeholder="Search by description, tracking, carrier..." 
-                class="w-full search-input py-4 pl-14 pr-6 rounded-2xl outline-none focus:ring-2 focus:ring-[#5d8574]/20 transition-all text-sm">
+            <div onclick="switchTab('active')" id="tabActive" class="tab-active pb-4 cursor-pointer text-sm uppercase">In progress <span id="countActive" class="badge-count">0</span></div>
+            <div onclick="switchTab('archive')" id="tabArchive" class="pb-4 cursor-pointer text-gray-400 text-sm uppercase">Archive <span id="countArchive" class="badge-count">0</span></div>
         </div>
 
         <div id="listContainer"></div>
     </div>
 
-    <div id="modalAdd" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div id="trackingPanel" class="flex flex-col">
+        <div class="p-6 border-b flex items-center justify-between bg-white z-10">
+            <button onclick="closePanel()" class="text-gray-400 font-bold text-xs uppercase flex items-center gap-2">
+                <i class="fas fa-arrow-left"></i> Close
+            </button>
+            <div class="text-center">
+                <p id="panelDesc" class="font-bold text-sm">---</p>
+                <p id="panelCode" class="text-[10px] text-gray-400 font-mono uppercase">---</p>
+            </div>
+            <div class="w-10"></div> </div>
+        <div class="flex-1 iframe-wrapper">
+            <div id="loading" class="absolute inset-0 flex items-center justify-center bg-white z-10">
+                <i class="fas fa-circle-notch fa-spin text-[#5d8574] text-2xl"></i>
+            </div>
+            <iframe id="trackIframe" src="" onload="document.getElementById('loading').style.display='none'"></iframe>
+        </div>
+    </div>
+
+    <div id="modalAdd" class="fixed inset-0 z-[200] hidden flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
         <div class="bg-white rounded-[2.5rem] w-full max-w-sm p-10 shadow-2xl">
-            <h2 class="text-2xl font-extrabold mb-8 text-center uppercase tracking-tight">New Shipment</h2>
+            <h2 class="text-2xl font-extrabold mb-8 text-center uppercase">New Shipment</h2>
             <div class="space-y-4">
-                <input type="text" id="inputDesc" placeholder="Description (e.g. iPhone 15 Pro)" class="w-full p-4 bg-gray-50 rounded-xl border-none outline-none focus:ring-2 focus:ring-[#5d8574] text-sm">
-                <input type="text" id="inputCode" placeholder="Tracking Number" class="w-full p-4 bg-gray-50 rounded-xl border-none outline-none font-mono uppercase focus:ring-2 focus:ring-[#5d8574] text-sm">
-                
-                <button onclick="addShipment()" class="w-full py-4 btn-primary text-white rounded-xl font-extrabold text-sm uppercase tracking-widest mt-6 shadow-lg">
-                    Add shipment
-                </button>
-                <button onclick="toggleModal(false)" class="w-full py-2 text-gray-400 font-bold text-[10px] uppercase tracking-widest mt-2 text-center">Cancel</button>
+                <input type="text" id="inputDesc" placeholder="Description" class="w-full p-4 bg-gray-50 rounded-xl outline-none text-sm">
+                <input type="text" id="inputCode" placeholder="Tracking Number" class="w-full p-4 bg-gray-50 rounded-xl outline-none font-mono uppercase text-sm">
+                <button onclick="addShipment()" class="w-full py-4 btn-primary text-white rounded-xl font-extrabold text-sm uppercase tracking-widest mt-6">Add shipment</button>
+                <button onclick="toggleModal(false)" class="w-full py-2 text-gray-400 font-bold text-[10px] uppercase mt-2">Cancel</button>
             </div>
         </div>
     </div>
 
     <script>
-        let shipments = JSON.parse(localStorage.getItem('ust_v2_db')) || [];
+        let shipments = JSON.parse(localStorage.getItem('ust_v3_db')) || [];
         let currentTab = 'active';
 
-        function toggleModal(show) {
-            document.getElementById('modalAdd').classList.toggle('hidden', !show);
-        }
+        function toggleModal(s) { document.getElementById('modalAdd').classList.toggle('hidden', !s); }
 
-        function switchTab(tab) {
-            currentTab = tab;
-            document.getElementById('tabActive').className = tab === 'active' ? 'tab-active pb-4 flex items-center text-sm uppercase tracking-tighter' : 'pb-4 flex items-center text-gray-400 text-sm uppercase tracking-tighter';
-            document.getElementById('tabArchive').className = tab === 'archive' ? 'tab-active pb-4 flex items-center text-sm uppercase tracking-tighter' : 'pb-4 flex items-center text-gray-400 text-sm uppercase tracking-tighter';
+        function switchTab(t) {
+            currentTab = t;
+            document.getElementById('tabActive').className = t === 'active' ? 'tab-active pb-4 cursor-pointer text-sm uppercase' : 'pb-4 cursor-pointer text-gray-400 text-sm uppercase';
+            document.getElementById('tabArchive').className = t === 'archive' ? 'tab-active pb-4 cursor-pointer text-sm uppercase' : 'pb-4 cursor-pointer text-gray-400 text-sm uppercase';
             renderList();
         }
 
         function addShipment() {
-            const desc = document.getElementById('inputDesc').value.trim();
-            const code = document.getElementById('inputCode').value.trim().toUpperCase();
+            const desc = document.getElementById('inputDesc').value;
+            const code = document.getElementById('inputCode').value.toUpperCase();
             if(!desc || !code) return;
-
             shipments.unshift({ id: Date.now(), desc, code, archived: false });
-            localStorage.setItem('ust_v2_db', JSON.stringify(shipments));
-            
-            document.getElementById('inputDesc').value = '';
-            document.getElementById('inputCode').value = '';
-            toggleModal(false);
-            renderList();
+            localStorage.setItem('ust_v3_db', JSON.stringify(shipments));
+            toggleModal(false); renderList();
         }
 
         function renderList() {
             const container = document.getElementById('listContainer');
-            const search = document.getElementById('searchBar').value.toLowerCase();
-            
             document.getElementById('countActive').innerText = shipments.filter(s => !s.archived).length;
             document.getElementById('countArchive').innerText = shipments.filter(s => s.archived).length;
+            const filtered = shipments.filter(s => (currentTab === 'active' ? !s.archived : s.archived));
 
-            const filtered = shipments.filter(s => {
-                const matchesTab = (currentTab === 'active' ? !s.archived : s.archived);
-                const matchesSearch = s.desc.toLowerCase().includes(search) || s.code.toLowerCase().includes(search);
-                return matchesTab && matchesSearch;
-            });
-
-            if (filtered.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state-box py-24 px-10 text-center">
-                        <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm text-[#5d8574]">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-8 h-8">
-                                <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path>
-                                <path d="m3.3 7 8.7 5 8.7-5"></path>
-                                <path d="M12 22V12"></path>
-                            </svg>
-                        </div>
-                        <h3 class="text-xl font-bold mb-2">No shipments ${currentTab === 'active' ? 'in progress' : 'archived'}</h3>
-                        <p class="text-gray-400 text-sm mb-10 max-w-[250px] mx-auto">Add your first shipment to start tracking it.</p>
-                        <button onclick="toggleModal(true)" class="btn-primary text-white px-10 py-4 rounded-xl font-bold shadow-md uppercase text-xs tracking-widest">
-                            + Add shipment
-                        </button>
+            container.innerHTML = filtered.length ? filtered.map(s => `
+                <div class="bg-white border border-gray-100 p-6 rounded-[1.5rem] flex justify-between items-center mb-4 hover:border-[#5d8574] cursor-pointer shadow-sm group" onclick="openPanel('${s.code}', '${s.desc}')">
+                    <div class="flex items-center gap-5">
+                        <div class="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-[#5d8574] group-hover:bg-[#5d8574] group-hover:text-white transition-all"><i class="fas fa-truck-fast"></i></div>
+                        <div><h4 class="font-bold text-sm">${s.desc}</h4><p class="text-[10px] font-mono text-gray-400 font-bold uppercase">${s.code}</p></div>
                     </div>
-                `;
-            } else {
-                container.innerHTML = filtered.map(s => `
-                    <div class="bg-white border border-gray-100 p-6 rounded-[1.5rem] flex justify-between items-center mb-4 hover:border-[#5d8574] transition-all cursor-pointer shadow-sm group" onclick="trackShipment('${s.code}')">
-                        <div class="flex items-center gap-5">
-                            <div class="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-[#5d8574] group-hover:bg-[#5d8574] group-hover:text-white transition-all">
-                                <i class="fas fa-truck-fast"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-gray-800 text-sm">${s.desc}</h4>
-                                <p class="text-[10px] font-mono text-gray-400 font-bold uppercase tracking-widest mt-1">${s.code}</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-4" onclick="event.stopPropagation()">
-                            <button onclick="toggleArchive(${s.id})" class="text-gray-300 hover:text-[#5d8574] transition-colors"><i class="fas fa-archive"></i></button>
-                            <button onclick="deleteShipment(${s.id})" class="text-gray-300 hover:text-red-500 transition-colors"><i class="fas fa-trash-alt"></i></button>
-                        </div>
+                    <div class="flex gap-4" onclick="event.stopPropagation()">
+                        <button onclick="toggleArchive(${s.id})" class="text-gray-300 hover:text-[#5d8574]"><i class="fas fa-archive"></i></button>
+                        <button onclick="deleteShipment(${s.id})" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash-alt"></i></button>
                     </div>
-                `).join('');
-            }
+                </div>
+            `).join('') : '<div class="text-center py-20 text-gray-300 uppercase text-[10px] font-bold tracking-widest">No shipments found</div>';
         }
 
-        function trackShipment(code) {
-            const url = `https://t.17track.net/en#nums=${code}`;
-            const w = 480; const h = 720;
-            const left = (screen.width/2)-(w/2); const top = (screen.height/2)-(h/2);
-            window.open(url, 'Tracking', `width=${w},height=${h},top=${top},left=${left},scrollbars=yes`);
+        function openPanel(code, desc) {
+            document.getElementById('panelDesc').innerText = desc;
+            document.getElementById('panelCode').innerText = code;
+            document.getElementById('loading').style.display = 'flex';
+            document.getElementById('trackIframe').src = `https://t.17track.net/en#nums=${code}`;
+            document.getElementById('trackingPanel').classList.add('open');
+        }
+
+        function closePanel() {
+            document.getElementById('trackingPanel').classList.remove('open');
+            setTimeout(() => { document.getElementById('trackIframe').src = ''; }, 400);
         }
 
         function toggleArchive(id) {
             const i = shipments.findIndex(s => s.id === id);
             shipments[i].archived = !shipments[i].archived;
-            localStorage.setItem('ust_v2_db', JSON.stringify(shipments));
+            localStorage.setItem('ust_v3_db', JSON.stringify(shipments));
             renderList();
         }
 
         function deleteShipment(id) {
-            if(!confirm("Delete this shipment?")) return;
+            if(!confirm("Delete?")) return;
             shipments = shipments.filter(s => s.id !== id);
-            localStorage.setItem('ust_v2_db', JSON.stringify(shipments));
+            localStorage.setItem('ust_v3_db', JSON.stringify(shipments));
             renderList();
         }
 
