@@ -7,33 +7,46 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #ffffff; }
+        .btn-green { background-color: #5d8574; }
         
-        body { font-family: 'Inter', sans-serif; background-color: #ffffff; color: #1f2937; overflow-x: hidden; }
-        .btn-primary { background-color: #5d8574; }
-        
-        /* Pannello laterale che scorre */
+        /* PANNELLO LATERALE */
         #trackingPanel {
             position: fixed; top: 0; right: 0; height: 100%; width: 100%;
-            background: white; z-index: 100; transform: translateX(100%);
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: -10px 0 30px rgba(0,0,0,0.1);
+            background: white; z-index: 1000; transform: translateX(100%);
+            transition: transform 0.4s ease; display: flex; flex-direction: column;
         }
-        @media (min-width: 768px) { #trackingPanel { width: 500px; } }
+        @media (min-width: 768px) { #trackingPanel { width: 450px; border-left: 1px solid #eee; } }
         #trackingPanel.open { transform: translateX(0); }
 
-        /* Mascheramento: nascondiamo l'header di 17track spostando l'iframe in alto */
-        .iframe-wrapper {
-            width: 100%; height: 100%; overflow: hidden; position: relative;
+        /* IL TRUCCO DEL RITAGLIO FISSO */
+        .viewport-container {
+            flex-grow: 1; 
+            position: relative; 
+            overflow: hidden; /* Taglia tutto ciò che esce */
+            background: #fff;
         }
+
         #trackIframe {
-            width: 100%; height: calc(100% + 150px);
-            border: none; position: absolute; top: -70px; /* Nasconde l'header originale */
+            position: absolute;
+            width: 100%;
+            height: 1000px; /* Altezza grande per caricare tutto */
+            top: -130px;    /* SPOSTA IN ALTO per centrare il riquadro rosso */
+            left: 0;
+            border: none;
+        }
+
+        /* IL "VETRO" INVISIBILE - Questo blocca lo scroll nell'iframe */
+        .glass-cover {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 20; /* Sta sopra l'iframe */
+            background: transparent;
+            cursor: default;
         }
 
         .tab-active { color: #5d8574; border-bottom: 2px solid #5d8574; font-weight: 700; }
-        .badge-count { background: #f1f3f5; color: #868e96; border-radius: 20px; padding: 2px 8px; font-size: 11px; margin-left: 6px; }
-        .active .badge-count { background: #e6f0eb; color: #5d8574; }
     </style>
 </head>
 <body class="p-6 md:p-12">
@@ -41,107 +54,85 @@
     <div class="max-w-3xl mx-auto">
         <header class="flex justify-between items-center mb-10">
             <div class="flex items-center gap-4">
-                <div class="w-12 h-12 btn-primary rounded-xl flex items-center justify-center shadow-md">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" class="w-7 h-7">
+                <div class="w-12 h-12 btn-green rounded-xl flex items-center justify-center shadow-md">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" class="w-7 h-7">
                         <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path>
                         <path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path>
                     </svg>
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-tight">Universal Shipping Tracking</h1>
-                    <p class="text-gray-400 text-[11px] font-bold uppercase tracking-widest">Global Logistics System</p>
+                    <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Global Logistics System</p>
                 </div>
             </div>
-            <button onclick="toggleModal(true)" class="w-12 h-12 btn-primary text-white rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-all">
-                <i class="fas fa-plus text-xl"></i>
-            </button>
+            <button onclick="openModal()" class="w-11 h-11 btn-green text-white rounded-full flex items-center justify-center shadow-lg"><i class="fas fa-plus"></i></button>
         </header>
 
-        <div class="flex gap-8 border-b border-gray-100 mb-8">
-            <div onclick="switchTab('active')" id="tabActive" class="tab-active pb-4 cursor-pointer text-sm uppercase">In progress <span id="countActive" class="badge-count">0</span></div>
-            <div onclick="switchTab('archive')" id="tabArchive" class="pb-4 cursor-pointer text-gray-400 text-sm uppercase">Archive <span id="countArchive" class="badge-count">0</span></div>
+        <div class="flex gap-8 border-b border-gray-100 mb-8 text-sm font-bold uppercase tracking-tighter">
+            <div onclick="setTab('active')" id="tab-active" class="tab-active pb-4 cursor-pointer">In Progress</div>
+            <div onclick="setTab('archived')" id="tab-archived" class="pb-4 cursor-pointer text-gray-300">Archive</div>
         </div>
 
-        <div id="listContainer"></div>
+        <div id="shipment-list" class="space-y-4"></div>
     </div>
 
-    <div id="trackingPanel" class="flex flex-col">
-        <div class="p-6 border-b flex items-center justify-between bg-white z-10">
-            <button onclick="closePanel()" class="text-gray-400 font-bold text-xs uppercase flex items-center gap-2">
-                <i class="fas fa-arrow-left"></i> Close
+    <div id="trackingPanel">
+        <div class="p-6 border-b flex justify-between items-center">
+            <button onclick="closePanel()" class="text-gray-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                <i class="fas fa-arrow-left"></i> Back to List
             </button>
-            <div class="text-center">
-                <p id="panelDesc" class="font-bold text-sm">---</p>
-                <p id="panelCode" class="text-[10px] text-gray-400 font-mono uppercase">---</p>
+        </div>
+        
+        <div class="viewport-container">
+            <div class="glass-cover"></div>
+            
+            <div id="loader" class="absolute inset-0 flex items-center justify-center bg-white z-30">
+                <i class="fas fa-circle-notch fa-spin text-green-700 text-2xl"></i>
             </div>
-            <div class="w-10"></div> </div>
-        <div class="flex-1 iframe-wrapper">
-            <div id="loading" class="absolute inset-0 flex items-center justify-center bg-white z-10">
-                <i class="fas fa-circle-notch fa-spin text-[#5d8574] text-2xl"></i>
-            </div>
-            <iframe id="trackIframe" src="" onload="document.getElementById('loading').style.display='none'"></iframe>
+            
+            <iframe id="trackIframe" src="" scrolling="no"></iframe>
         </div>
     </div>
 
-    <div id="modalAdd" class="fixed inset-0 z-[200] hidden flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-        <div class="bg-white rounded-[2.5rem] w-full max-w-sm p-10 shadow-2xl">
-            <h2 class="text-2xl font-extrabold mb-8 text-center uppercase">New Shipment</h2>
-            <div class="space-y-4">
-                <input type="text" id="inputDesc" placeholder="Description" class="w-full p-4 bg-gray-50 rounded-xl outline-none text-sm">
-                <input type="text" id="inputCode" placeholder="Tracking Number" class="w-full p-4 bg-gray-50 rounded-xl outline-none font-mono uppercase text-sm">
-                <button onclick="addShipment()" class="w-full py-4 btn-primary text-white rounded-xl font-extrabold text-sm uppercase tracking-widest mt-6">Add shipment</button>
-                <button onclick="toggleModal(false)" class="w-full py-2 text-gray-400 font-bold text-[10px] uppercase mt-2">Cancel</button>
-            </div>
+    <div id="modalAdd" class="fixed inset-0 z-[2000] hidden flex items-center justify-center p-6 bg-black/40">
+        <div class="bg-white rounded-[2rem] w-full max-w-sm p-8">
+            <input type="text" id="in-desc" placeholder="Product" class="w-full p-4 bg-gray-100 rounded-xl mb-4 outline-none">
+            <input type="text" id="in-code" placeholder="Tracking Number" class="w-full p-4 bg-gray-100 rounded-xl mb-4 outline-none uppercase">
+            <button onclick="save()" class="w-full py-4 btn-green text-white rounded-xl font-bold uppercase">Save</button>
+            <button onclick="closeModal()" class="w-full text-gray-400 text-xs mt-4">Cancel</button>
         </div>
     </div>
 
     <script>
-        let shipments = JSON.parse(localStorage.getItem('ust_v3_db')) || [];
-        let currentTab = 'active';
+        let db = JSON.parse(localStorage.getItem('ust_final_v5')) || [];
 
-        function toggleModal(s) { document.getElementById('modalAdd').classList.toggle('hidden', !s); }
-
-        function switchTab(t) {
-            currentTab = t;
-            document.getElementById('tabActive').className = t === 'active' ? 'tab-active pb-4 cursor-pointer text-sm uppercase' : 'pb-4 cursor-pointer text-gray-400 text-sm uppercase';
-            document.getElementById('tabArchive').className = t === 'archive' ? 'tab-active pb-4 cursor-pointer text-sm uppercase' : 'pb-4 cursor-pointer text-gray-400 text-sm uppercase';
-            renderList();
-        }
-
-        function addShipment() {
-            const desc = document.getElementById('inputDesc').value;
-            const code = document.getElementById('inputCode').value.toUpperCase();
+        function save() {
+            const desc = document.getElementById('in-desc').value;
+            const code = document.getElementById('in-code').value.toUpperCase();
             if(!desc || !code) return;
-            shipments.unshift({ id: Date.now(), desc, code, archived: false });
-            localStorage.setItem('ust_v3_db', JSON.stringify(shipments));
-            toggleModal(false); renderList();
+            db.unshift({ id: Date.now(), desc, code, arch: false });
+            localStorage.setItem('ust_final_v5', JSON.stringify(db));
+            closeModal(); render();
         }
 
-        function renderList() {
-            const container = document.getElementById('listContainer');
-            document.getElementById('countActive').innerText = shipments.filter(s => !s.archived).length;
-            document.getElementById('countArchive').innerText = shipments.filter(s => s.archived).length;
-            const filtered = shipments.filter(s => (currentTab === 'active' ? !s.archived : s.archived));
-
-            container.innerHTML = filtered.length ? filtered.map(s => `
-                <div class="bg-white border border-gray-100 p-6 rounded-[1.5rem] flex justify-between items-center mb-4 hover:border-[#5d8574] cursor-pointer shadow-sm group" onclick="openPanel('${s.code}', '${s.desc}')">
-                    <div class="flex items-center gap-5">
-                        <div class="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-[#5d8574] group-hover:bg-[#5d8574] group-hover:text-white transition-all"><i class="fas fa-truck-fast"></i></div>
-                        <div><h4 class="font-bold text-sm">${s.desc}</h4><p class="text-[10px] font-mono text-gray-400 font-bold uppercase">${s.code}</p></div>
+        function render() {
+            const list = document.getElementById('shipment-list');
+            const items = db.filter(x => x.arch === (document.getElementById('tab-archived').className.includes('active')));
+            list.innerHTML = items.map(x => `
+                <div class="bg-white border border-gray-100 p-6 rounded-2xl flex justify-between items-center cursor-pointer hover:border-green-700" onclick="openPanel('${x.code}')">
+                    <div>
+                        <h4 class="font-bold text-sm">${x.desc}</h4>
+                        <p class="text-[10px] text-gray-400 font-mono">${x.code}</p>
                     </div>
-                    <div class="flex gap-4" onclick="event.stopPropagation()">
-                        <button onclick="toggleArchive(${s.id})" class="text-gray-300 hover:text-[#5d8574]"><i class="fas fa-archive"></i></button>
-                        <button onclick="deleteShipment(${s.id})" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash-alt"></i></button>
-                    </div>
+                    <i class="fas fa-chevron-right text-gray-200"></i>
                 </div>
-            `).join('') : '<div class="text-center py-20 text-gray-300 uppercase text-[10px] font-bold tracking-widest">No shipments found</div>';
+            `).join('');
         }
 
-        function openPanel(code, desc) {
-            document.getElementById('panelDesc').innerText = desc;
-            document.getElementById('panelCode').innerText = code;
-            document.getElementById('loading').style.display = 'flex';
-            document.getElementById('trackIframe').src = `https://t.17track.net/en#nums=${code}`;
+        function openPanel(code) {
+            document.getElementById('loader').style.display = 'flex';
+            // Carichiamo la versione mobile che è più pulita e facile da "centrare"
+            document.getElementById('trackIframe').src = `https://m.17track.net/en/track#nums=${code}`;
             document.getElementById('trackingPanel').classList.add('open');
         }
 
@@ -150,21 +141,10 @@
             setTimeout(() => { document.getElementById('trackIframe').src = ''; }, 400);
         }
 
-        function toggleArchive(id) {
-            const i = shipments.findIndex(s => s.id === id);
-            shipments[i].archived = !shipments[i].archived;
-            localStorage.setItem('ust_v3_db', JSON.stringify(shipments));
-            renderList();
-        }
-
-        function deleteShipment(id) {
-            if(!confirm("Delete?")) return;
-            shipments = shipments.filter(s => s.id !== id);
-            localStorage.setItem('ust_v3_db', JSON.stringify(shipments));
-            renderList();
-        }
-
-        renderList();
+        function openModal() { document.getElementById('modalAdd').classList.remove('hidden'); }
+        function closeModal() { document.getElementById('modalAdd').classList.add('hidden'); }
+        
+        render();
     </script>
 </body>
 </html>
