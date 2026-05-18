@@ -8,45 +8,46 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-        body { font-family: 'Inter', sans-serif; background: #ffffff; }
-        .btn-green { background-color: #5d8574; }
+        body { font-family: 'Inter', sans-serif; background: #ffffff; color: #1f2937; margin: 0; }
         
-        /* PANNELLO LATERALE */
+        .btn-green { background-color: #5d8574; }
+        .text-green { color: #5d8574; }
+
+        /* PANNELLO TRACKING */
         #trackingPanel {
             position: fixed; top: 0; right: 0; height: 100%; width: 100%;
             background: white; z-index: 1000; transform: translateX(100%);
-            transition: transform 0.4s ease; display: flex; flex-direction: column;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; flex-direction: column;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.05);
         }
         @media (min-width: 768px) { #trackingPanel { width: 450px; border-left: 1px solid #eee; } }
         #trackingPanel.open { transform: translateX(0); }
 
-        /* IL TRUCCO DEL RITAGLIO FISSO */
+        /* CONTENITORE RITAGLIO */
         .viewport-container {
-            flex-grow: 1; 
-            position: relative; 
-            overflow: hidden; /* Taglia tutto ciò che esce */
-            background: #fff;
+            flex-grow: 1; position: relative; overflow: hidden; background: #fff;
         }
 
         #trackIframe {
             position: absolute;
             width: 100%;
-            height: 1000px; /* Altezza grande per caricare tutto */
-            top: -130px;    /* SPOSTA IN ALTO per centrare il riquadro rosso */
+            height: 1200px; /* Molto alto per caricare il contenuto */
+            top: -140px;    /* Nasconde l'header e centra il contenuto */
             left: 0;
             border: none;
         }
 
-        /* IL "VETRO" INVISIBILE - Questo blocca lo scroll nell'iframe */
+        /* VETRO PROTETTIVO (Blocca lo scroll nell'iframe) */
         .glass-cover {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 20; /* Sta sopra l'iframe */
-            background: transparent;
-            cursor: default;
+            z-index: 50; background: transparent; cursor: default;
         }
 
         .tab-active { color: #5d8574; border-bottom: 2px solid #5d8574; font-weight: 700; }
+        .badge { background: #f1f3f5; color: #868e96; border-radius: 20px; padding: 2px 8px; font-size: 11px; margin-left: 6px; }
+        #modalAdd { background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }
     </style>
 </head>
 <body class="p-6 md:p-12">
@@ -65,85 +66,135 @@
                     <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Global Logistics System</p>
                 </div>
             </div>
-            <button onclick="openModal()" class="w-11 h-11 btn-green text-white rounded-full flex items-center justify-center shadow-lg"><i class="fas fa-plus"></i></button>
+            <button onclick="openModal()" class="w-11 h-11 btn-green text-white rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-all">
+                <i class="fas fa-plus"></i>
+            </button>
         </header>
 
         <div class="flex gap-8 border-b border-gray-100 mb-8 text-sm font-bold uppercase tracking-tighter">
-            <div onclick="setTab('active')" id="tab-active" class="tab-active pb-4 cursor-pointer">In Progress</div>
-            <div onclick="setTab('archived')" id="tab-archived" class="pb-4 cursor-pointer text-gray-300">Archive</div>
+            <div onclick="setTab('active')" id="tab-active" class="tab-active pb-4 cursor-pointer">In Progress <span id="count-active" class="badge">0</span></div>
+            <div onclick="setTab('archived')" id="tab-archived" class="pb-4 cursor-pointer text-gray-300">Archive <span id="count-archived" class="badge">0</span></div>
         </div>
 
         <div id="shipment-list" class="space-y-4"></div>
     </div>
 
     <div id="trackingPanel">
-        <div class="p-6 border-b flex justify-between items-center">
+        <div class="p-6 border-b flex justify-between items-center bg-white z-[60]">
             <button onclick="closePanel()" class="text-gray-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
                 <i class="fas fa-arrow-left"></i> Back to List
             </button>
+            <div class="text-right">
+                <p id="panel-desc" class="text-xs font-bold">---</p>
+                <p id="panel-code" class="text-[9px] font-mono text-gray-400 uppercase">---</p>
+            </div>
         </div>
         
         <div class="viewport-container">
-            <div class="glass-cover"></div>
-            
-            <div id="loader" class="absolute inset-0 flex items-center justify-center bg-white z-30">
+            <div class="glass-cover"></div> <div id="loader" class="absolute inset-0 flex items-center justify-center bg-white z-[55]">
                 <i class="fas fa-circle-notch fa-spin text-green-700 text-2xl"></i>
             </div>
-            
             <iframe id="trackIframe" src="" scrolling="no"></iframe>
         </div>
     </div>
 
-    <div id="modalAdd" class="fixed inset-0 z-[2000] hidden flex items-center justify-center p-6 bg-black/40">
-        <div class="bg-white rounded-[2rem] w-full max-w-sm p-8">
-            <input type="text" id="in-desc" placeholder="Product" class="w-full p-4 bg-gray-100 rounded-xl mb-4 outline-none">
-            <input type="text" id="in-code" placeholder="Tracking Number" class="w-full p-4 bg-gray-100 rounded-xl mb-4 outline-none uppercase">
-            <button onclick="save()" class="w-full py-4 btn-green text-white rounded-xl font-bold uppercase">Save</button>
-            <button onclick="closeModal()" class="w-full text-gray-400 text-xs mt-4">Cancel</button>
+    <div id="modalAdd" class="fixed inset-0 z-[2000] hidden flex items-center justify-center p-6">
+        <div class="bg-white rounded-[2.5rem] w-full max-w-sm p-10 shadow-2xl">
+            <h2 class="text-xl font-black mb-8 text-center uppercase">New Shipment</h2>
+            <div class="space-y-4">
+                <input type="text" id="in-desc" placeholder="Product Name" class="w-full p-4 bg-gray-50 rounded-2xl outline-none border border-gray-100 text-sm">
+                <input type="text" id="in-code" placeholder="Tracking Number" class="w-full p-4 bg-gray-50 rounded-2xl outline-none border border-gray-100 text-sm font-mono uppercase">
+                <button onclick="save()" class="w-full py-4 btn-green text-white rounded-2xl font-black uppercase shadow-lg mt-4">Save Shipment</button>
+                <button onclick="closeModal()" class="w-full text-gray-400 font-bold text-[10px] uppercase py-2">Cancel</button>
+            </div>
         </div>
     </div>
 
     <script>
-        let db = JSON.parse(localStorage.getItem('ust_final_v5')) || [];
+        let shipments = JSON.parse(localStorage.getItem('ust_v_final_fix')) || [];
+        let currentTab = 'active';
+
+        function setTab(t) {
+            currentTab = t;
+            document.getElementById('tab-active').className = t === 'active' ? 'tab-active pb-4 cursor-pointer' : 'pb-4 cursor-pointer text-gray-300';
+            document.getElementById('tab-archived').className = t === 'archived' ? 'tab-active pb-4 cursor-pointer' : 'pb-4 cursor-pointer text-gray-300';
+            render();
+        }
 
         function save() {
-            const desc = document.getElementById('in-desc').value;
-            const code = document.getElementById('in-code').value.toUpperCase();
+            const desc = document.getElementById('in-desc').value.trim();
+            const code = document.getElementById('in-code').value.trim().toUpperCase();
             if(!desc || !code) return;
-            db.unshift({ id: Date.now(), desc, code, arch: false });
-            localStorage.setItem('ust_final_v5', JSON.stringify(db));
-            closeModal(); render();
+            shipments.unshift({ id: Date.now(), desc, code, arch: false });
+            localStorage.setItem('ust_v_final_fix', JSON.stringify(shipments));
+            closeModal();
+            render();
         }
 
         function render() {
             const list = document.getElementById('shipment-list');
-            const items = db.filter(x => x.arch === (document.getElementById('tab-archived').className.includes('active')));
-            list.innerHTML = items.map(x => `
-                <div class="bg-white border border-gray-100 p-6 rounded-2xl flex justify-between items-center cursor-pointer hover:border-green-700" onclick="openPanel('${x.code}')">
-                    <div>
-                        <h4 class="font-bold text-sm">${x.desc}</h4>
-                        <p class="text-[10px] text-gray-400 font-mono">${x.code}</p>
+            document.getElementById('count-active').innerText = shipments.filter(x => !x.arch).length;
+            document.getElementById('count-archived').innerText = shipments.filter(x => x.arch).length;
+            
+            const filtered = shipments.filter(x => currentTab === 'active' ? !x.arch : x.arch);
+
+            list.innerHTML = filtered.length ? filtered.map(x => `
+                <div class="bg-white border border-gray-100 p-6 rounded-2xl flex justify-between items-center group cursor-pointer hover:border-[#5d8574] transition-all" onclick="openPanel('${x.code}', '${x.desc}')">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-green shadow-sm group-hover:bg-[#5d8574] group-hover:text-white transition-all"><i class="fas fa-truck"></i></div>
+                        <div>
+                            <h4 class="font-bold text-sm text-gray-800">${x.desc}</h4>
+                            <p class="text-[10px] font-mono text-gray-400 font-bold uppercase mt-0.5">${x.code}</p>
+                        </div>
                     </div>
-                    <i class="fas fa-chevron-right text-gray-200"></i>
+                    <div class="flex gap-4" onclick="event.stopPropagation()">
+                        <button onclick="toggleArch(${x.id})" class="text-gray-200 hover:text-green-700"><i class="fas fa-archive text-xs"></i></button>
+                        <button onclick="remove(${x.id})" class="text-gray-200 hover:text-red-500"><i class="fas fa-trash text-xs"></i></button>
+                    </div>
                 </div>
-            `).join('');
+            `).join('') : '<div class="py-20 text-center text-gray-200 font-bold uppercase text-[10px] tracking-widest">No Shipments</div>';
         }
 
-        function openPanel(code) {
+        function openPanel(code, desc) {
+            document.getElementById('panel-desc').innerText = desc;
+            document.getElementById('panel-code').innerText = code;
             document.getElementById('loader').style.display = 'flex';
-            // Carichiamo la versione mobile che è più pulita e facile da "centrare"
+            
+            // Usiamo l'URL mobile che è più "incastrabile" e pulito
             document.getElementById('trackIframe').src = `https://m.17track.net/en/track#nums=${code}`;
+            
+            // Apriamo il pannello
             document.getElementById('trackingPanel').classList.add('open');
+            
+            // Quando l'iframe carica, nascondiamo il loader
+            document.getElementById('trackIframe').onload = function() {
+                document.getElementById('loader').style.display = 'none';
+            };
         }
 
         function closePanel() {
             document.getElementById('trackingPanel').classList.remove('open');
+            // Puliamo l'iframe per il prossimo pacco
             setTimeout(() => { document.getElementById('trackIframe').src = ''; }, 400);
+        }
+
+        function toggleArch(id) {
+            const i = shipments.findIndex(x => x.id === id);
+            shipments[i].arch = !shipments[i].arch;
+            localStorage.setItem('ust_v_final_fix', JSON.stringify(shipments));
+            render();
+        }
+
+        function remove(id) {
+            if(!confirm("Eliminare?")) return;
+            shipments = shipments.filter(x => x.id !== id);
+            localStorage.setItem('ust_v_final_fix', JSON.stringify(shipments));
+            render();
         }
 
         function openModal() { document.getElementById('modalAdd').classList.remove('hidden'); }
         function closeModal() { document.getElementById('modalAdd').classList.add('hidden'); }
-        
+
         render();
     </script>
 </body>
