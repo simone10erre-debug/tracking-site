@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracking Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { background-color: #f1f5f9; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .detail-view { transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: -15px 0 50px rgba(0,0,0,0.15); z-index: 100; }
+        .detail-view.active { transform: translateX(0); }
+        .sponsor-column { min-width: 180px; flex-shrink: 0; }
+        .shipment-card { transition: all 0.2s ease; border: 2px solid transparent; }
+        .shipment-card:hover { transform: translateY(-2px); border-color: #5d8574; box-shadow: 0 10px 20px -5px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="flex justify-center items-start gap-8 max-w-[1700px] mx-auto">
+        
+        <div class="sponsor-column hidden xl:block"></div>
+
+        <div class="w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 flex flex-col overflow-hidden min-h-[85vh]">
+            
+            <div class="p-6 md:p-12">
+                <header class="flex justify-between items-center mb-10">
+                    <div>
+                        <h1 class="text-4xl font-black text-gray-800 tracking-tighter italic">MY TRACKING</h1>
+                        <p class="text-sm text-gray-400 font-medium">Gestione spedizioni universale</p>
+                    </div>
+                    <button onclick="openModal()" class="bg-[#5d8574] text-white px-8 py-4 rounded-2xl font-bold shadow-lg shadow-[#5d8574]/30 hover:bg-[#4a6b5d] transition-all active:scale-95">
+                        + NUOVO PACCO
+                    </button>
+                </header>
+
+                <div class="relative mb-10">
+                    <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-300"></i>
+                    <input type="text" id="search-bar" onkeyup="filterShipments()" placeholder="Cerca tra i tuoi pacchi..." class="w-full pl-14 pr-6 py-5 bg-gray-50 border-none rounded-[1.5rem] outline-none focus:ring-2 focus:ring-[#5d8574]/20 transition-all font-medium text-gray-600">
+                </div>
+
+                <div id="shipment-list" class="space-y-4">
+                    </div>
+            </div>
+        </div>
+
+        <div class="sponsor-column hidden xl:block"></div>
+
+    </div>
+
+    <div id="detail-pane" class="detail-view fixed top-0 right-0 h-full w-full md:w-[750px] bg-white z-[150] flex flex-col">
+        <div class="p-6 border-b flex justify-between items-center bg-white">
+            <button onclick="closeDetail()" class="text-gray-400 hover:text-black transition flex items-center gap-2 font-bold uppercase tracking-widest text-xs">
+                <i class="fas fa-chevron-left text-lg"></i> Torna Indietro
+            </button>
+            <div id="action-buttons" class="flex gap-3">
+                </div>
+        </div>
+        <div class="p-10 bg-gray-50 border-b">
+            <h2 id="detail-title" class="text-4xl font-black text-gray-800 tracking-tighter">---</h2>
+            <p id="detail-code" class="text-[#5d8574] font-mono font-bold mt-2 text-xl tracking-widest">---</p>
+        </div>
+        <div id="YQContainer" class="flex-1 bg-white"></div>
+    </div>
+
+    <div id="modal" class="fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-[200] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-[3rem] w-full max-w-md p-10 shadow-2xl">
+            <h3 id="modal-title" class="text-2xl font-black text-gray-800 mb-6 italic uppercase">Aggiungi Tracking</h3>
+            <input type="hidden" id="edit-id">
+            <div class="space-y-5">
+                <div>
+                    <label class="text-[10px] font-black text-gray-400 uppercase ml-1 tracking-widest">Nome Prodotto</label>
+                    <input type="text" id="input-title" placeholder="Es. Scarpe Nike" class="w-full p-5 bg-gray-100 border-none rounded-2xl outline-none focus:ring-2 focus:ring-[#5d8574] transition-all">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-gray-400 uppercase ml-1 tracking-widest">Codice Spedizione</label>
+                    <input type="text" id="input-code" placeholder="Codice Tracking" class="w-full p-5 bg-gray-100 border-none rounded-2xl outline-none focus:ring-2 focus:ring-[#5d8574] font-mono">
+                </div>
+                <button onclick="saveShipment()" id="save-btn" class="w-full bg-[#5d8574] text-white py-5 rounded-2xl font-bold shadow-xl hover:bg-[#4a6b5d] transition-all uppercase tracking-widest">Salva</button>
+                <button onclick="closeModal()" class="w-full text-gray-400 font-bold text-xs uppercase tracking-widest py-2">Annulla</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="https://www.17track.net/externalcall.js"></script>
+
+    <script>
+        let shipments = JSON.parse(localStorage.getItem('final_tracking_db')) || [];
+
+        function saveShipment() {
+            const title = document.getElementById('input-title').value.trim();
+            const code = document.getElementById('input-code').value.trim().toUpperCase();
+            const editId = document.getElementById('edit-id').value;
+
+            if (!title || !code) return alert("Compila tutti i campi!");
+
+            if (editId) {
+                // MODIFICA
+                const index = shipments.findIndex(s => s.id == editId);
+                shipments[index] = { ...shipments[index], title, code };
+            } else {
+                // AGGIUNTA
+                shipments.unshift({ id: Date.now(), title, code });
+            }
+
+            localStorage.setItem('final_tracking_db', JSON.stringify(shipments));
+            closeModal();
+            renderList();
+        }
+
+        function renderList(filter = '') {
+            const container = document.getElementById('shipment-list');
+            const filtered = shipments.filter(s => s.title.toLowerCase().includes(filter.toLowerCase()) || s.code.includes(filter.toUpperCase()));
+            
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="py-20 text-center text-gray-300 font-medium italic"><p>Nessun pacco trovato.</p></div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(s => `
+                <div onclick="openTracking('${s.code}', '${s.title}', ${s.id})" class="shipment-card bg-white p-6 rounded-3xl flex justify-between items-center shadow-sm border border-gray-50 cursor-pointer">
+                    <div class="flex items-center gap-6">
+                        <div class="w-14 h-14 bg-[#5d8574]/10 rounded-2xl flex items-center justify-center text-[#5d8574]">
+                            <i class="fas fa-truck text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-800 text-lg">${s.title}</h3>
+                            <p class="text-xs text-[#5d8574] font-mono font-bold tracking-widest">${s.code}</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-arrow-right text-gray-200"></i>
+                </div>
+            `).join('');
+        }
+
+        function filterShipments() {
+            renderList(document.getElementById('search-bar').value);
+        }
+
+        function openTracking(code, title, id) {
+            document.getElementById('detail-pane').classList.add('active');
+            document.getElementById('detail-title').innerText = title;
+            document.getElementById('detail-code').innerText = code;
+            
+            document.getElementById('action-buttons').innerHTML = `
+                <button onclick="editModal(${id})" class="bg-gray-100 text-gray-600 px-5 py-2 rounded-xl font-bold text-xs hover:bg-gray-200 transition-all">MODIFICA</button>
+                <button onclick="deleteShipment(${id})" class="bg-red-50 text-red-500 px-5 py-2 rounded-xl font-bold text-xs hover:bg-red-500 hover:text-white transition-all">ELIMINA</button>
+            `;
+
+            const container = document.getElementById('YQContainer');
+            container.innerHTML = '<div class="p-20 text-center text-gray-300 italic font-bold">Caricamento tracciamento corriere...</div>';
+
+            setTimeout(() => {
+                if (window.YQT_DoTrack) {
+                    YQT_DoTrack({ YQ_ElementId: "YQContainer", YQ_Width: "100%", YQ_Height: "100%", YQ_Fc: "0", YQ_Lang: "it", YQ_Num: code });
+                }
+            }, 500);
+        }
+
+        function editModal(id) {
+            const s = shipments.find(x => x.id == id);
+            document.getElementById('modal-title').innerText = "Modifica Pacco";
+            document.getElementById('input-title').value = s.title;
+            document.getElementById('input-code').value = s.code;
+            document.getElementById('edit-id').value = s.id;
+            closeDetail();
+            openModal();
+        }
+
+        function deleteShipment(id) {
+            if(!confirm("Eliminare definitivamente?")) return;
+            shipments = shipments.filter(s => s.id !== id);
+            localStorage.setItem('final_tracking_db', JSON.stringify(shipments));
+            closeDetail();
+            renderList();
+        }
+
+        function openModal() { 
+            if(!document.getElementById('edit-id').value) document.getElementById('modal-title').innerText = "Aggiungi Tracking";
+            document.getElementById('modal').classList.remove('hidden'); 
+        }
+        function closeModal() { 
+            document.getElementById('modal').classList.add('hidden'); 
+            document.getElementById('edit-id').value = "";
+            document.getElementById('input-title').value = "";
+            document.getElementById('input-code').value = "";
+        }
+        function closeDetail() { document.getElementById('detail-pane').classList.remove('active'); }
+
+        renderList();
+    </script>
+</body>
+</html>
