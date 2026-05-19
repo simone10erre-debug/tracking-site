@@ -2,107 +2,171 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Universal Shipping Tracking</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#5d8574">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/679/679821.png">
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/679/679821.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
         :root { --brand-green: #5d8574; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #ffffff; color: #1a1a1a; margin: 0; }
+        
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #ffffff; 
+            /* Evita contrasto con tacca/status bar */
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
         .btn-green { background-color: var(--brand-green); color: white; }
-        .text-green { color: var(--brand-green); }
-        .card { border: 1px solid #f3f4f6; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 1.5rem; }
-        .card:hover { border-color: var(--brand-green); box-shadow: 0 12px 30px rgba(93, 133, 116, 0.08); }
-        .page { display: none; min-height: 100vh; animation: fadeIn 0.3s ease; }
+        .page { display: none; min-height: 100vh; animation: fadeIn 0.2s ease; }
         .page.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .tracking-viewport { overflow: hidden; border-radius: 2rem; background: #f9fafb; height: 500px; position: relative; border: 1px solid #f0f0f0; }
-        #tracking-iframe { width: 100%; height: 800px; border: none; margin-top: -65px; }
-        #modalAdd { background: rgba(255,255,255,0.8); backdrop-filter: blur(12px); }
-        .tab-active { color: var(--brand-green); border-bottom: 2px solid var(--brand-green); }
+
+        /* Widget lungo senza scroll interno */
+        .tracking-container { width: 100%; overflow: hidden; }
+        #tracking-iframe { 
+            width: 100%; 
+            height: 2500px; /* Molto lungo per mostrare tutto senza scroll interno */
+            border: none; 
+            margin-top: -65px; 
+            pointer-events: auto;
+        }
+
+        .card { border: 1px solid #f3f4f6; border-radius: 1.5rem; transition: 0.3s; }
+        .card:hover { border-color: var(--brand-green); }
+
+        /* Popup iOS */
+        #ios-popup { background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }
     </style>
 </head>
 <body>
 
-    <div id="home-page" class="page active max-w-2xl mx-auto px-6 py-12">
+    <div id="install-banner" class="hidden p-4 bg-gray-50 border-b border-gray-100">
+        <button id="install-button" class="w-full py-3 btn-green rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg">
+            Installa Universal Tracking
+        </button>
+    </div>
+
+    <div id="home-page" class="page active max-w-2xl mx-auto px-6 py-8">
         <nav class="flex justify-between items-center mb-10">
             <div class="flex items-center gap-4">
-                <div class="w-12 h-12 btn-green rounded-xl flex items-center justify-center shadow-lg shadow-[#5d8574]/20">
+                <div class="w-12 h-12 btn-green rounded-xl flex items-center justify-center shadow-lg">
                     <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" class="w-7 h-7">
                         <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path>
                         <path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path>
                     </svg>
                 </div>
-                <div>
-                    <h1 class="text-xl font-extrabold tracking-tighter leading-none">Universal Shipping Tracking</h1>
-                    <p class="text-[10px] font-bold text-green uppercase tracking-[0.2em] mt-1">Premium Logistics Service</p>
-                </div>
+                <h1 class="text-xl font-extrabold tracking-tighter">Universal Tracking</h1>
             </div>
-            <button onclick="toggleModal(true)" class="w-11 h-11 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-[#5d8574] transition-all">
+            <button onclick="toggleModal(true)" class="w-11 h-11 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-[#5d8574]">
                 <i class="fas fa-plus text-lg"></i>
             </button>
         </nav>
 
         <div class="flex gap-8 border-b border-gray-100 mb-8 text-xs font-bold uppercase tracking-widest">
-            <button onclick="setTab('active')" id="tab-active" class="pb-4 tab-active">In Corso</button>
+            <button onclick="setTab('active')" id="tab-active" class="pb-4 border-b-2 border-[#5d8574] text-gray-900">In Corso</button>
             <button onclick="setTab('archived')" id="tab-archived" class="pb-4 text-gray-300">Archiviati</button>
         </div>
 
-        <div id="shipment-list" class="space-y-5"></div>
+        <div id="shipment-list" class="space-y-4"></div>
     </div>
 
-    <div id="detail-page" class="page max-w-2xl mx-auto px-6 py-12">
-        <button onclick="goToHome()" class="mb-10 text-gray-400 text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-2 hover:text-gray-900 transition-all">
-            <i class="fas fa-chevron-left"></i> Torna alla Home
-        </button>
-
-        <div class="mb-12 flex justify-between items-start">
-            <div>
-                <h2 id="det-title" class="text-3xl font-black tracking-tighter text-gray-900 mb-2">---</h2>
-                <div class="flex items-center gap-3">
-                    <span id="det-code" class="text-xs font-mono font-bold text-green bg-[#5d8574]/10 px-3 py-1 rounded-lg uppercase">---</span>
+    <div id="detail-page" class="page max-w-2xl mx-auto px-0 md:px-6 py-8">
+        <div class="px-6 mb-6">
+            <button onclick="goToHome()" class="mb-6 text-gray-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
+                <i class="fas fa-arrow-left"></i> Home
+            </button>
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h2 id="det-title" class="text-2xl font-black tracking-tighter text-gray-900">---</h2>
+                    <div class="flex items-center gap-2 mt-2">
+                        <span id="det-code" class="text-xs font-mono font-bold text-[#5d8574]">---</span>
+                        <button onclick="copyCode()" class="text-gray-300 hover:text-[#5d8574] text-xs"><i class="far fa-copy"></i></button>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <button id="btn-archive" onclick="archiveCurrent()" class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400"><i class="fas fa-archive"></i></button>
+                    <button onclick="deleteCurrent()" class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-300"><i class="fas fa-trash"></i></button>
                 </div>
             </div>
-            <div class="flex gap-3">
-                <button id="btn-archive-action" onclick="archiveCurrent()" class="w-12 h-12 rounded-2xl border border-gray-100 text-gray-300 hover:text-blue-500 hover:bg-blue-50 transition-all flex items-center justify-center">
-                    <i class="fas fa-archive"></i>
-                </button>
-                <button onclick="deleteCurrent()" class="w-12 h-12 rounded-2xl border border-red-50 text-red-200 hover:text-red-500 hover:bg-red-50 transition-all flex items-center justify-center">
-                    <i class="fas fa-trash-alt"></i>
-                </button>
-            </div>
         </div>
-
-        <div class="tracking-viewport">
-            <div id="loader" class="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">
-                <i class="fas fa-circle-notch fa-spin text-[#5d8574] text-2xl"></i>
-            </div>
+        
+        <div class="tracking-container">
+            <div id="loader" class="py-20 text-center"><i class="fas fa-circle-notch fa-spin text-[#5d8574]"></i></div>
             <iframe id="tracking-iframe" src=""></iframe>
+        </div>
+    </div>
+
+    <div id="ios-popup" class="fixed inset-0 z-[200] hidden flex items-end justify-center p-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-sm p-8 text-center shadow-2xl">
+            <i class="fas fa-apple-whole text-3xl mb-4"></i>
+            <h3 class="text-lg font-bold mb-2">Installa su iPhone</h3>
+            <p class="text-sm text-gray-500 mb-6 leading-relaxed">Tocca l'icona <i class="far fa-share-square"></i> in basso nel browser e seleziona <strong>"Aggiungi alla schermata Home"</strong> per usarla come App.</p>
+            <button onclick="closeIosPopup()" class="w-full py-4 btn-green rounded-2xl font-bold uppercase text-xs tracking-widest">Ho capito</button>
         </div>
     </div>
 
     <div id="modalAdd" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-6">
         <div class="bg-white rounded-[2.5rem] w-full max-w-sm p-10 shadow-2xl border border-gray-100">
-            <h3 class="text-xl font-black mb-8 text-center uppercase tracking-tight">Nuova Spedizione</h3>
-            <div class="space-y-5">
-                <input type="text" id="in-desc" placeholder="Descrizione prodotto" class="w-full p-4 bg-gray-50 rounded-2xl outline-none text-sm font-medium border-none">
-                <input type="text" id="in-code" placeholder="Tracking Number" class="w-full p-4 bg-gray-50 rounded-2xl outline-none text-sm font-mono uppercase border-none">
-                <button onclick="save()" class="w-full py-4 btn-green rounded-2xl font-bold uppercase text-xs tracking-[0.2em] shadow-lg mt-4">Salva</button>
-                <button onclick="toggleModal(false)" class="w-full text-gray-300 font-bold text-[10px] uppercase py-2 text-center">Annulla</button>
-            </div>
+            <input type="text" id="in-desc" placeholder="Prodotto" class="w-full p-4 bg-gray-50 rounded-2xl outline-none text-sm mb-4">
+            <input type="text" id="in-code" placeholder="Codice Tracking" class="w-full p-4 bg-gray-50 rounded-2xl outline-none text-sm mb-6 font-mono uppercase">
+            <button onclick="save()" class="w-full py-4 btn-green rounded-2xl font-bold uppercase text-xs tracking-widest">Salva</button>
+            <button onclick="toggleModal(false)" class="w-full text-gray-300 text-[10px] uppercase mt-4">Chiudi</button>
         </div>
     </div>
 
     <script>
-        let db = JSON.parse(localStorage.getItem('ust_v8_final')) || [];
+        let db = JSON.parse(localStorage.getItem('ust_pwa_v1')) || [];
         let currentId = null;
         let activeTab = 'active';
 
+        // GESTIONE PWA
+        let deferredPrompt;
+        const installBanner = document.getElementById('install-banner');
+        const installButton = document.getElementById('install-button');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (window.innerWidth < 1024) installBanner.classList.remove('hidden');
+        });
+
+        installButton.addEventListener('click', async () => {
+            if (isIOS()) {
+                document.getElementById('ios-popup').classList.remove('hidden');
+            } else if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') installBanner.classList.add('hidden');
+                deferredPrompt = null;
+            }
+        });
+
+        function isIOS() {
+            return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        }
+
+        if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
+            installBanner.classList.add('hidden');
+        }
+
+        function closeIosPopup() { document.getElementById('ios-popup').classList.add('hidden'); }
+
+        // CORE LOGIC
         function setTab(tab) {
             activeTab = tab;
-            document.getElementById('tab-active').className = tab === 'active' ? 'pb-4 tab-active' : 'pb-4 text-gray-300';
-            document.getElementById('tab-archived').className = tab === 'archived' ? 'pb-4 tab-active' : 'pb-4 text-gray-300';
+            document.getElementById('tab-active').className = tab === 'active' ? 'pb-4 border-b-2 border-[#5d8574] text-gray-900' : 'pb-4 text-gray-300';
+            document.getElementById('tab-archived').className = tab === 'archived' ? 'pb-4 border-b-2 border-[#5d8574] text-gray-900' : 'pb-4 text-gray-300';
             render();
         }
 
@@ -113,36 +177,25 @@
             const code = document.getElementById('in-code').value.toUpperCase().trim();
             if(!desc || !code) return;
             db.unshift({ id: Date.now(), desc, code, archived: false });
-            localStorage.setItem('ust_v8_final', JSON.stringify(db));
-            document.getElementById('in-desc').value = '';
-            document.getElementById('in-code').value = '';
-            toggleModal(false);
-            render();
+            localStorage.setItem('ust_pwa_v1', JSON.stringify(db));
+            toggleModal(false); render();
         }
 
         function render() {
             const list = document.getElementById('shipment-list');
             const filtered = db.filter(x => activeTab === 'active' ? !x.archived : x.archived);
-            list.innerHTML = filtered.length ? '' : '<div class="py-32 text-center text-gray-300 font-bold uppercase text-[10px] tracking-[0.3em]">Nessuna spedizione qui</div>';
-            
-            filtered.forEach(item => {
-                const div = document.createElement('div');
-                div.className = "card bg-white p-7 cursor-pointer flex justify-between items-center group";
-                div.onclick = () => showDetail(item.id);
-                div.innerHTML = `
-                    <div class="flex items-center gap-5">
-                        <div class="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-green group-hover:bg-[#5d8574] group-hover:text-white transition-all">
-                            <i class="fas fa-box text-sm"></i>
-                        </div>
+            list.innerHTML = filtered.map(item => `
+                <div class="card bg-white p-6 cursor-pointer flex justify-between items-center" onclick="showDetail(${item.id})">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-[#5d8574]"><i class="fas fa-box"></i></div>
                         <div>
                             <h4 class="font-bold text-sm text-gray-900">${item.desc}</h4>
-                            <p class="text-[10px] font-mono text-gray-400 uppercase mt-1 tracking-wider">${item.code}</p>
+                            <p class="text-[10px] font-mono text-gray-300 uppercase">${item.code}</p>
                         </div>
                     </div>
-                    <i class="fas fa-chevron-right text-gray-200 group-hover:text-green-700"></i>
-                `;
-                list.appendChild(div);
-            });
+                    <i class="fas fa-chevron-right text-gray-200"></i>
+                </div>
+            `).join('') || '<p class="text-center py-20 text-gray-300 text-[10px] uppercase">Nessuna spedizione</p>';
         }
 
         function showDetail(id) {
@@ -150,39 +203,44 @@
             currentId = id;
             document.getElementById('det-title').innerText = item.desc;
             document.getElementById('det-code').innerText = item.code;
-            
-            const btnArch = document.getElementById('btn-archive-action');
-            btnArch.innerHTML = item.archived ? '<i class="fas fa-box-open"></i>' : '<i class="fas fa-archive"></i>';
-            btnArch.title = item.archived ? "Ripristina" : "Archivia";
-
             const iframe = document.getElementById('tracking-iframe');
-            document.getElementById('loader').style.display = 'flex';
+            document.getElementById('loader').style.display = 'block';
             iframe.style.display = 'none';
             iframe.src = `https://m.17track.net/en/track#nums=${item.code}`;
             iframe.onload = () => { document.getElementById('loader').style.display = 'none'; iframe.style.display = 'block'; };
-
             document.getElementById('home-page').classList.remove('active');
             document.getElementById('detail-page').classList.add('active');
+            window.scrollTo(0,0);
         }
 
-        function archiveCurrent() {
-            const i = db.findIndex(x => x.id === currentId);
-            db[i].archived = !db[i].archived;
-            localStorage.setItem('ust_v8_final', JSON.stringify(db));
-            goToHome();
-        }
-
-        function deleteCurrent() {
-            if(!confirm("Eliminare definitivamente?")) return;
-            db = db.filter(x => x.id !== currentId);
-            localStorage.setItem('ust_v8_final', JSON.stringify(db));
-            goToHome();
+        function copyCode() {
+            const code = document.getElementById('det-code').innerText;
+            navigator.clipboard.writeText(code);
+            alert('Codice copiato!');
         }
 
         function goToHome() {
             document.getElementById('detail-page').classList.remove('active');
             document.getElementById('home-page').classList.add('active');
-            render();
+        }
+
+        function deleteCurrent() {
+            if(!confirm("Eliminare?")) return;
+            db = db.filter(x => x.id !== currentId);
+            localStorage.setItem('ust_pwa_v1', JSON.stringify(db));
+            goToHome(); render();
+        }
+
+        function archiveCurrent() {
+            const i = db.findIndex(x => x.id === currentId);
+            db[i].archived = !db[i].archived;
+            localStorage.setItem('ust_pwa_v1', JSON.stringify(db));
+            goToHome(); render();
+        }
+
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
         }
 
         render();
