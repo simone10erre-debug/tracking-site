@@ -1,194 +1,244 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Universal Shipping Tracking</title>
+    <title>Universal Track | Premium Logistics</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-        body { font-family: 'Inter', sans-serif; background: #ffffff; color: #1f2937; margin: 0; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
-        .btn-green { background-color: #5d8574; }
-        .text-green { color: #5d8574; }
-
-        /* PANNELLO TRACKING */
-        #trackingPanel {
-            position: fixed; top: 0; right: 0; height: 100%; width: 100%;
-            background: white; z-index: 1000; transform: translateX(100%);
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex; flex-direction: column;
-            box-shadow: -10px 0 30px rgba(0,0,0,0.05);
-        }
-        @media (min-width: 768px) { #trackingPanel { width: 450px; border-left: 1px solid #eee; } }
-        #trackingPanel.open { transform: translateX(0); }
-
-        /* CONTENITORE RITAGLIO */
-        .viewport-container {
-            flex-grow: 1; position: relative; overflow: hidden; background: #fff;
+        :root {
+            --brand-green: #5d8574;
+            --brand-light: #f4f7f5;
         }
 
-        #trackIframe {
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #ffffff;
+            color: #1a1a1a;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .shipment-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid #f0f0f0;
+        }
+
+        .shipment-card:hover {
+            border-color: var(--brand-green);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(93, 133, 116, 0.08);
+        }
+
+        .status-dot {
+            height: 8px;
+            width: 8px;
+            background-color: var(--brand-green);
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            box-shadow: 0 0 0 4px rgba(93, 133, 116, 0.1);
+        }
+
+        /* Timeline Style */
+        .timeline-item {
+            position: relative;
+            padding-left: 24px;
+            padding-bottom: 20px;
+            border-left: 1px solid #e5e7eb;
+        }
+        .timeline-item::before {
+            content: '';
             position: absolute;
-            width: 100%;
-            height: 1200px; /* Molto alto per caricare il contenuto */
-            top: -140px;    /* Nasconde l'header e centra il contenuto */
-            left: 0;
-            border: none;
+            left: -5px;
+            top: 4px;
+            width: 9px;
+            height: 9px;
+            background: white;
+            border: 2px solid var(--brand-green);
+            border-radius: 50%;
         }
 
-        /* VETRO PROTETTIVO (Blocca lo scroll nell'iframe) */
-        .glass-cover {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 50; background: transparent; cursor: default;
+        .btn-primary {
+            background-color: var(--brand-green);
+            color: white;
+            transition: all 0.2s;
         }
 
-        .tab-active { color: #5d8574; border-bottom: 2px solid #5d8574; font-weight: 700; }
-        .badge { background: #f1f3f5; color: #868e96; border-radius: 20px; padding: 2px 8px; font-size: 11px; margin-left: 6px; }
-        #modalAdd { background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }
+        .btn-primary:hover {
+            background-color: #4a6a5d;
+            box-shadow: 0 4px 12px rgba(93, 133, 116, 0.2);
+        }
+
+        #modalAdd {
+            backdrop-filter: blur(8px);
+            background-color: rgba(255, 255, 255, 0.7);
+        }
+
+        .loader-spin {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="p-6 md:p-12">
+<body class="antialiased text-gray-900">
 
-    <div class="max-w-3xl mx-auto">
-        <header class="flex justify-between items-center mb-10">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 btn-green rounded-xl flex items-center justify-center shadow-md">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" class="w-7 h-7">
-                        <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path>
-                        <path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path>
-                    </svg>
+    <div class="max-w-2xl mx-auto px-6 py-12">
+        <nav class="flex justify-between items-center mb-16">
+            <div class="flex items-center gap-3">
+                <div class="relative w-10 h-10 flex items-center justify-center">
+                    <div class="absolute inset-0 border-2 border-[#5d8574] rounded-lg rotate-45"></div>
+                    <i class="fas fa-box text-[#5d8574] text-lg"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-extrabold tracking-tight">Universal Shipping Tracking</h1>
-                    <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Global Logistics System</p>
+                    <span class="block text-lg font-extrabold tracking-tight leading-none text-gray-900">UNIVERTRAK</span>
+                    <span class="block text-[10px] font-bold text-[#5d8574] uppercase tracking-[0.2em] mt-1">Global Logistics</span>
                 </div>
             </div>
-            <button onclick="openModal()" class="w-11 h-11 btn-green text-white rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-all">
+            <button onclick="openModal()" class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-[#5d8574] hover:bg-[#f4f7f5] transition-all">
                 <i class="fas fa-plus"></i>
             </button>
-        </header>
+        </nav>
 
-        <div class="flex gap-8 border-b border-gray-100 mb-8 text-sm font-bold uppercase tracking-tighter">
-            <div onclick="setTab('active')" id="tab-active" class="tab-active pb-4 cursor-pointer">In Progress <span id="count-active" class="badge">0</span></div>
-            <div onclick="setTab('archived')" id="tab-archived" class="pb-4 cursor-pointer text-gray-300">Archive <span id="count-archived" class="badge">0</span></div>
+        <div class="relative mb-12">
+            <input type="text" id="searchInput" onkeyup="render()" placeholder="Cerca spedizione..." 
+                class="w-full py-4 px-6 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#5d8574]/20 outline-none text-sm font-medium transition-all">
+            <i class="fas fa-search absolute right-6 top-1/2 -translate-y-1/2 text-gray-300"></i>
         </div>
 
-        <div id="shipment-list" class="space-y-4"></div>
+        <div class="flex gap-8 border-b border-gray-100 mb-8">
+            <button onclick="setTab('active')" id="tab-active" class="pb-4 border-b-2 border-[#5d8574] text-sm font-bold text-gray-900">In Corso</button>
+            <button onclick="setTab('archive')" id="tab-archive" class="pb-4 border-b-2 border-transparent text-sm font-bold text-gray-300 hover:text-gray-500 transition-all">Archivio</button>
+        </div>
+
+        <div id="shipmentList" class="space-y-4">
+            </div>
     </div>
 
-    <div id="trackingPanel">
-        <div class="p-6 border-b flex justify-between items-center bg-white z-[60]">
-            <button onclick="closePanel()" class="text-gray-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
-                <i class="fas fa-arrow-left"></i> Back to List
-            </button>
-            <div class="text-right">
-                <p id="panel-desc" class="text-xs font-bold">---</p>
-                <p id="panel-code" class="text-[9px] font-mono text-gray-400 uppercase">---</p>
-            </div>
-        </div>
-        
-        <div class="viewport-container">
-            <div class="glass-cover"></div> <div id="loader" class="absolute inset-0 flex items-center justify-center bg-white z-[55]">
-                <i class="fas fa-circle-notch fa-spin text-green-700 text-2xl"></i>
-            </div>
-            <iframe id="trackIframe" src="" scrolling="no"></iframe>
-        </div>
-    </div>
-
-    <div id="modalAdd" class="fixed inset-0 z-[2000] hidden flex items-center justify-center p-6">
-        <div class="bg-white rounded-[2.5rem] w-full max-w-sm p-10 shadow-2xl">
-            <h2 class="text-xl font-black mb-8 text-center uppercase">New Shipment</h2>
+    <div id="modalAdd" class="fixed inset-0 z-50 hidden flex items-center justify-center p-6">
+        <div class="bg-white rounded-[2.5rem] w-full max-w-sm p-10 shadow-[0_32px_64px_-15px_rgba(0,0,0,0.1)] border border-gray-100">
+            <h3 class="text-xl font-extrabold mb-8 text-center tracking-tight">NUOVA SPEDIZIONE</h3>
             <div class="space-y-4">
-                <input type="text" id="in-desc" placeholder="Product Name" class="w-full p-4 bg-gray-50 rounded-2xl outline-none border border-gray-100 text-sm">
-                <input type="text" id="in-code" placeholder="Tracking Number" class="w-full p-4 bg-gray-50 rounded-2xl outline-none border border-gray-100 text-sm font-mono uppercase">
-                <button onclick="save()" class="w-full py-4 btn-green text-white rounded-2xl font-black uppercase shadow-lg mt-4">Save Shipment</button>
-                <button onclick="closeModal()" class="w-full text-gray-400 font-bold text-[10px] uppercase py-2">Cancel</button>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase ml-2">Descrizione</label>
+                    <input type="text" id="descInput" placeholder="es. MacBook Pro" class="w-full p-4 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-[#5d8574] outline-none text-sm">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase ml-2">Tracking Number</label>
+                    <input type="text" id="codeInput" placeholder="es. 1Z999..." class="w-full p-4 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-[#5d8574] outline-none font-mono text-sm uppercase">
+                </div>
+                <button onclick="saveShipment()" class="w-full py-4 btn-primary rounded-xl font-bold uppercase text-xs tracking-widest mt-6">Aggiungi</button>
+                <button onclick="closeModal()" class="w-full text-gray-400 font-bold text-[10px] uppercase py-2">Annulla</button>
             </div>
         </div>
     </div>
 
     <script>
-        let shipments = JSON.parse(localStorage.getItem('ust_v_final_fix')) || [];
+        const API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiI0MDU4MjBjMC01MzgxLTExZjEtODU1NS04M2UxNDhlZjg5ZTkiLCJzdWJJZCI6IjZhMGM1YzdhNDhjMTgzNjc2OTUxOTU4YiIsImlhdCI6MTc3OTE5NTAwMn0.2WfBrU2njv9jdtPPSZnxGzy2CkdixYCEyMFY4lNkCE8";
+        let db = JSON.parse(localStorage.getItem('univertrak_db')) || [];
         let currentTab = 'active';
 
         function setTab(t) {
             currentTab = t;
-            document.getElementById('tab-active').className = t === 'active' ? 'tab-active pb-4 cursor-pointer' : 'pb-4 cursor-pointer text-gray-300';
-            document.getElementById('tab-archived').className = t === 'archived' ? 'tab-active pb-4 cursor-pointer' : 'pb-4 cursor-pointer text-gray-300';
+            document.getElementById('tab-active').className = t === 'active' ? 'pb-4 border-b-2 border-[#5d8574] text-sm font-bold text-gray-900' : 'pb-4 border-b-2 border-transparent text-sm font-bold text-gray-300';
+            document.getElementById('tab-archive').className = t === 'archive' ? 'pb-4 border-b-2 border-[#5d8574] text-sm font-bold text-gray-900' : 'pb-4 border-b-2 border-transparent text-sm font-bold text-gray-300';
             render();
         }
 
-        function save() {
-            const desc = document.getElementById('in-desc').value.trim();
-            const code = document.getElementById('in-code').value.trim().toUpperCase();
+        function saveShipment() {
+            const desc = document.getElementById('descInput').value.trim();
+            const code = document.getElementById('codeInput').value.trim().toUpperCase();
             if(!desc || !code) return;
-            shipments.unshift({ id: Date.now(), desc, code, arch: false });
-            localStorage.setItem('ust_v_final_fix', JSON.stringify(shipments));
+
+            db.unshift({ id: Date.now(), desc, code, archived: false });
+            localStorage.setItem('univertrak_db', JSON.stringify(db));
             closeModal();
             render();
         }
 
-        function render() {
-            const list = document.getElementById('shipment-list');
-            document.getElementById('count-active').innerText = shipments.filter(x => !x.arch).length;
-            document.getElementById('count-archived').innerText = shipments.filter(x => x.arch).length;
-            
-            const filtered = shipments.filter(x => currentTab === 'active' ? !x.arch : x.arch);
+        async function fetchTracking(code, elementId) {
+            const container = document.getElementById(elementId);
+            container.innerHTML = `<div class="py-4 text-center"><i class="fas fa-circle-notch loader-spin text-gray-300"></i></div>`;
+            container.classList.remove('hidden');
 
-            list.innerHTML = filtered.length ? filtered.map(x => `
-                <div class="bg-white border border-gray-100 p-6 rounded-2xl flex justify-between items-center group cursor-pointer hover:border-[#5d8574] transition-all" onclick="openPanel('${x.code}', '${x.desc}')">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-green shadow-sm group-hover:bg-[#5d8574] group-hover:text-white transition-all"><i class="fas fa-truck"></i></div>
-                        <div>
-                            <h4 class="font-bold text-sm text-gray-800">${x.desc}</h4>
-                            <p class="text-[10px] font-mono text-gray-400 font-bold uppercase mt-0.5">${x.code}</p>
+            try {
+                const response = await fetch(`https://parcelsapp.com/api/v2/parcels?uuid=${API_KEY}&tracking_number=${code}`);
+                const data = await response.json();
+                
+                if (data.states && data.states.length > 0) {
+                    let html = `<div class="mt-6 border-t border-gray-50 pt-6 space-y-4">`;
+                    data.states.slice(0, 3).forEach(state => {
+                        html += `
+                            <div class="timeline-item">
+                                <p class="text-xs font-bold text-gray-800">${state.status}</p>
+                                <p class="text-[10px] text-gray-400 mt-1">${state.date} • ${state.location || 'In transito'}</p>
+                            </div>
+                        `;
+                    });
+                    html += `</div>`;
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = `<p class="text-[10px] text-orange-400 font-bold uppercase mt-4">Nessun dato disponibile ancora</p>`;
+                }
+            } catch (err) {
+                container.innerHTML = `<p class="text-[10px] text-red-400 font-bold uppercase mt-4">Errore nel caricamento</p>`;
+            }
+        }
+
+        function render() {
+            const list = document.getElementById('shipmentList');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = db.filter(x => (currentTab === 'active' ? !x.archived : x.archived) && x.desc.toLowerCase().includes(search));
+
+            if (filtered.length === 0) {
+                list.innerHTML = `<div class="py-20 text-center"><p class="text-gray-300 text-[10px] font-bold uppercase tracking-[0.2em]">Nessuna spedizione</p></div>`;
+                return;
+            }
+
+            list.innerHTML = filtered.map(x => `
+                <div class="shipment-card bg-white p-6 rounded-3xl cursor-pointer" onclick="toggleDetails('${x.id}', '${x.code}')">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 group-hover:text-[#5d8574]">
+                                <i class="fas fa-box-open text-xs"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold text-gray-900">${x.desc}</h4>
+                                <p class="text-[10px] font-mono text-gray-400 mt-1">${x.code}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <button onclick="event.stopPropagation(); toggleArchive(${x.id})" class="text-gray-200 hover:text-blue-500 transition-colors"><i class="fas fa-archive text-xs"></i></button>
+                            <button onclick="event.stopPropagation(); deleteItem(${x.id})" class="text-gray-200 hover:text-red-500 transition-colors"><i class="fas fa-trash text-xs"></i></button>
                         </div>
                     </div>
-                    <div class="flex gap-4" onclick="event.stopPropagation()">
-                        <button onclick="toggleArch(${x.id})" class="text-gray-200 hover:text-green-700"><i class="fas fa-archive text-xs"></i></button>
-                        <button onclick="remove(${x.id})" class="text-gray-200 hover:text-red-500"><i class="fas fa-trash text-xs"></i></button>
-                    </div>
+                    <div id="details-${x.id}" class="hidden"></div>
                 </div>
-            `).join('') : '<div class="py-20 text-center text-gray-200 font-bold uppercase text-[10px] tracking-widest">No Shipments</div>';
+            `).join('');
         }
 
-        function openPanel(code, desc) {
-            document.getElementById('panel-desc').innerText = desc;
-            document.getElementById('panel-code').innerText = code;
-            document.getElementById('loader').style.display = 'flex';
-            
-            // Usiamo l'URL mobile che è più "incastrabile" e pulito
-            document.getElementById('trackIframe').src = `https://m.17track.net/en/track#nums=${code}`;
-            
-            // Apriamo il pannello
-            document.getElementById('trackingPanel').classList.add('open');
-            
-            // Quando l'iframe carica, nascondiamo il loader
-            document.getElementById('trackIframe').onload = function() {
-                document.getElementById('loader').style.display = 'none';
-            };
+        function toggleDetails(id, code) {
+            const el = document.getElementById(`details-${id}`);
+            if (!el.classList.contains('hidden')) {
+                el.classList.add('hidden');
+            } else {
+                fetchTracking(code, `details-${id}`);
+            }
         }
 
-        function closePanel() {
-            document.getElementById('trackingPanel').classList.remove('open');
-            // Puliamo l'iframe per il prossimo pacco
-            setTimeout(() => { document.getElementById('trackIframe').src = ''; }, 400);
-        }
-
-        function toggleArch(id) {
-            const i = shipments.findIndex(x => x.id === id);
-            shipments[i].arch = !shipments[i].arch;
-            localStorage.setItem('ust_v_final_fix', JSON.stringify(shipments));
+        function toggleArchive(id) {
+            const i = db.findIndex(x => x.id === id);
+            db[i].archived = !db[i].archived;
+            localStorage.setItem('univertrak_db', JSON.stringify(db));
             render();
         }
 
-        function remove(id) {
+        function deleteItem(id) {
             if(!confirm("Eliminare?")) return;
-            shipments = shipments.filter(x => x.id !== id);
-            localStorage.setItem('ust_v_final_fix', JSON.stringify(shipments));
+            db = db.filter(x => x.id !== id);
+            localStorage.setItem('univertrak_db', JSON.stringify(db));
             render();
         }
 
