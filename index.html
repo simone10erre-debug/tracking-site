@@ -3,180 +3,188 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Univertrak | Global Logistics</title>
+    <title>Universal Shipping Tracking</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #ffffff; color: #1a1a1a; }
-        .btn-green { background-color: #5d8574; color: white; transition: all 0.2s; }
-        .btn-green:hover { background-color: #4a6a5d; transform: translateY(-1px); }
-        .card { border: 1px solid #f0f0f0; transition: all 0.3s ease; }
-        .card:hover { border-color: #5d8574; box-shadow: 0 10px 30px rgba(0,0,0,0.04); }
-        .hidden { display: none; }
-        .timeline-line { position: relative; padding-left: 24px; border-left: 2px solid #f0f0f0; margin-left: 10px; }
-        .timeline-dot { position: absolute; left: -7px; top: 4px; width: 12px; height: 12px; background: #5d8574; border-radius: 50%; border: 2px solid white; }
+        :root { --brand-green: #5d8574; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #ffffff; color: #1a1a1a; margin: 0; }
+        .btn-green { background-color: var(--brand-green); color: white; }
+        .text-green { color: var(--brand-green); }
+        .card { border: 1px solid #f3f4f6; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 1.5rem; }
+        .card:hover { border-color: var(--brand-green); box-shadow: 0 12px 30px rgba(93, 133, 116, 0.08); }
+        .page { display: none; min-height: 100vh; animation: fadeIn 0.3s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .tracking-viewport { overflow: hidden; border-radius: 2rem; background: #f9fafb; height: 500px; position: relative; border: 1px solid #f0f0f0; }
+        #tracking-iframe { width: 100%; height: 800px; border: none; margin-top: -65px; }
+        #modalAdd { background: rgba(255,255,255,0.8); backdrop-filter: blur(12px); }
+        .tab-active { color: var(--brand-green); border-bottom: 2px solid var(--brand-green); }
     </style>
 </head>
-<body class="antialiased">
+<body>
 
-    <div id="view-home" class="max-w-2xl mx-auto px-6 py-12">
-        <nav class="flex justify-between items-center mb-12">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 border-2 border-[#5d8574] rounded-xl flex items-center justify-center font-bold text-[#5d8574]">U</div>
+    <div id="home-page" class="page active max-w-2xl mx-auto px-6 py-12">
+        <nav class="flex justify-between items-center mb-10">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 btn-green rounded-xl flex items-center justify-center shadow-lg shadow-[#5d8574]/20">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" class="w-7 h-7">
+                        <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path>
+                        <path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path>
+                    </svg>
+                </div>
                 <div>
-                    <h1 class="text-lg font-extrabold tracking-tighter">UNIVERTRAK</h1>
-                    <p class="text-[9px] font-bold text-[#5d8574] uppercase tracking-widest">Tracking System</p>
+                    <h1 class="text-xl font-extrabold tracking-tighter leading-none">Universal Shipping Tracking</h1>
+                    <p class="text-[10px] font-bold text-green uppercase tracking-[0.2em] mt-1">Premium Logistics Service</p>
                 </div>
             </div>
-            <button onclick="openAddModal()" class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-[#5d8574]"><i class="fas fa-plus"></i></button>
+            <button onclick="toggleModal(true)" class="w-11 h-11 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-[#5d8574] transition-all">
+                <i class="fas fa-plus text-lg"></i>
+            </button>
         </nav>
 
-        <div id="home-list" class="space-y-4">
-            </div>
+        <div class="flex gap-8 border-b border-gray-100 mb-8 text-xs font-bold uppercase tracking-widest">
+            <button onclick="setTab('active')" id="tab-active" class="pb-4 tab-active">In Corso</button>
+            <button onclick="setTab('archived')" id="tab-archived" class="pb-4 text-gray-300">Archiviati</button>
+        </div>
+
+        <div id="shipment-list" class="space-y-5"></div>
     </div>
 
-    <div id="view-detail" class="max-w-2xl mx-auto px-6 py-12 hidden">
-        <button onclick="showHome()" class="mb-8 text-gray-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
-            <i class="fas fa-arrow-left"></i> Torna alla Home
+    <div id="detail-page" class="page max-w-2xl mx-auto px-6 py-12">
+        <button onclick="goToHome()" class="mb-10 text-gray-400 text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-2 hover:text-gray-900 transition-all">
+            <i class="fas fa-chevron-left"></i> Torna alla Home
         </button>
 
-        <div class="bg-gray-50 rounded-[2.5rem] p-8 md:p-12 mb-8">
-            <div class="flex justify-between items-start mb-10">
-                <div>
-                    <h2 id="det-title" class="text-3xl font-black tracking-tighter mb-2">---</h2>
-                    <p id="det-code" class="text-xs font-mono text-gray-400 font-bold uppercase tracking-widest">---</p>
-                </div>
-                <div class="flex gap-3">
-                    <button id="btn-edit" class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-400 shadow-sm"><i class="fas fa-pen text-xs"></i></button>
-                    <button id="btn-delete" class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-red-300 shadow-sm"><i class="fas fa-trash text-xs"></i></button>
+        <div class="mb-12 flex justify-between items-start">
+            <div>
+                <h2 id="det-title" class="text-3xl font-black tracking-tighter text-gray-900 mb-2">---</h2>
+                <div class="flex items-center gap-3">
+                    <span id="det-code" class="text-xs font-mono font-bold text-green bg-[#5d8574]/10 px-3 py-1 rounded-lg uppercase">---</span>
                 </div>
             </div>
-
-            <div class="grid grid-cols-2 gap-6 mb-12">
-                <div>
-                    <p class="text-[9px] font-bold text-gray-400 uppercase mb-1">Mittente</p>
-                    <p id="det-sender" class="text-sm font-bold text-gray-800">In attesa...</p>
-                </div>
-                <div>
-                    <p class="text-[9px] font-bold text-gray-400 uppercase mb-1">Destinazione</p>
-                    <p id="det-country" class="text-sm font-bold text-gray-800">---</p>
-                </div>
+            <div class="flex gap-3">
+                <button id="btn-archive-action" onclick="archiveCurrent()" class="w-12 h-12 rounded-2xl border border-gray-100 text-gray-300 hover:text-blue-500 hover:bg-blue-50 transition-all flex items-center justify-center">
+                    <i class="fas fa-archive"></i>
+                </button>
+                <button onclick="deleteCurrent()" class="w-12 h-12 rounded-2xl border border-red-50 text-red-200 hover:text-red-500 hover:bg-red-50 transition-all flex items-center justify-center">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
             </div>
+        </div>
 
-            <div id="det-steps" class="space-y-6">
-                </div>
+        <div class="tracking-viewport">
+            <div id="loader" class="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">
+                <i class="fas fa-circle-notch fa-spin text-[#5d8574] text-2xl"></i>
+            </div>
+            <iframe id="tracking-iframe" src=""></iframe>
         </div>
     </div>
 
-    <div id="modalAdd" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-6 bg-white/80 backdrop-blur-md">
+    <div id="modalAdd" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-6">
         <div class="bg-white rounded-[2.5rem] w-full max-w-sm p-10 shadow-2xl border border-gray-100">
-            <h3 class="text-lg font-black mb-8 text-center uppercase tracking-tighter">Nuova Spedizione</h3>
-            <div class="space-y-4">
-                <input type="text" id="in-desc" placeholder="Descrizione" class="w-full p-4 bg-gray-50 rounded-2xl outline-none text-sm font-medium">
-                <input type="text" id="in-code" placeholder="Codice Tracking" class="w-full p-4 bg-gray-50 rounded-2xl outline-none text-sm font-mono uppercase">
-                <button onclick="save()" class="w-full py-4 btn-green rounded-2xl font-bold uppercase text-xs tracking-widest shadow-lg mt-4">Aggiungi</button>
-                <button onclick="closeAddModal()" class="w-full text-gray-400 font-bold text-[10px] uppercase py-2">Annulla</button>
+            <h3 class="text-xl font-black mb-8 text-center uppercase tracking-tight">Nuova Spedizione</h3>
+            <div class="space-y-5">
+                <input type="text" id="in-desc" placeholder="Descrizione prodotto" class="w-full p-4 bg-gray-50 rounded-2xl outline-none text-sm font-medium border-none">
+                <input type="text" id="in-code" placeholder="Tracking Number" class="w-full p-4 bg-gray-50 rounded-2xl outline-none text-sm font-mono uppercase border-none">
+                <button onclick="save()" class="w-full py-4 btn-green rounded-2xl font-bold uppercase text-xs tracking-[0.2em] shadow-lg mt-4">Salva</button>
+                <button onclick="toggleModal(false)" class="w-full text-gray-300 font-bold text-[10px] uppercase py-2 text-center">Annulla</button>
             </div>
         </div>
     </div>
 
     <script>
-        const API_KEY = "apik_HvzKptWrIfWVtEuC70AvY6iyGRtTFl";
-        let db = JSON.parse(localStorage.getItem('univertrak_v6')) || [];
+        let db = JSON.parse(localStorage.getItem('ust_v8_final')) || [];
+        let currentId = null;
+        let activeTab = 'active';
 
-        function showHome() {
-            document.getElementById('view-home').classList.remove('hidden');
-            document.getElementById('view-detail').classList.add('hidden');
+        function setTab(tab) {
+            activeTab = tab;
+            document.getElementById('tab-active').className = tab === 'active' ? 'pb-4 tab-active' : 'pb-4 text-gray-300';
+            document.getElementById('tab-archived').className = tab === 'archived' ? 'pb-4 tab-active' : 'pb-4 text-gray-300';
             render();
         }
 
+        function toggleModal(show) { document.getElementById('modalAdd').classList.toggle('hidden', !show); }
+
         function save() {
             const desc = document.getElementById('in-desc').value;
-            const code = document.getElementById('in-code').value.toUpperCase();
+            const code = document.getElementById('in-code').value.toUpperCase().trim();
             if(!desc || !code) return;
-            db.unshift({ id: Date.now(), desc, code });
-            localStorage.setItem('univertrak_v6', JSON.stringify(db));
-            closeAddModal(); render();
+            db.unshift({ id: Date.now(), desc, code, archived: false });
+            localStorage.setItem('ust_v8_final', JSON.stringify(db));
+            document.getElementById('in-desc').value = '';
+            document.getElementById('in-code').value = '';
+            toggleModal(false);
+            render();
         }
 
-        async function showDetail(id) {
-            const item = db.find(x => x.id == id);
+        function render() {
+            const list = document.getElementById('shipment-list');
+            const filtered = db.filter(x => activeTab === 'active' ? !x.archived : x.archived);
+            list.innerHTML = filtered.length ? '' : '<div class="py-32 text-center text-gray-300 font-bold uppercase text-[10px] tracking-[0.3em]">Nessuna spedizione qui</div>';
+            
+            filtered.forEach(item => {
+                const div = document.createElement('div');
+                div.className = "card bg-white p-7 cursor-pointer flex justify-between items-center group";
+                div.onclick = () => showDetail(item.id);
+                div.innerHTML = `
+                    <div class="flex items-center gap-5">
+                        <div class="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-green group-hover:bg-[#5d8574] group-hover:text-white transition-all">
+                            <i class="fas fa-box text-sm"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-sm text-gray-900">${item.desc}</h4>
+                            <p class="text-[10px] font-mono text-gray-400 uppercase mt-1 tracking-wider">${item.code}</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-200 group-hover:text-green-700"></i>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function showDetail(id) {
+            const item = db.find(x => x.id === id);
+            currentId = id;
             document.getElementById('det-title').innerText = item.desc;
             document.getElementById('det-code').innerText = item.code;
-            document.getElementById('det-steps').innerHTML = '<p class="text-center py-10 text-gray-300 animate-pulse">Caricamento passaggi...</p>';
             
-            document.getElementById('view-home').classList.add('hidden');
-            document.getElementById('view-detail').classList.remove('hidden');
+            const btnArch = document.getElementById('btn-archive-action');
+            btnArch.innerHTML = item.archived ? '<i class="fas fa-box-open"></i>' : '<i class="fas fa-archive"></i>';
+            btnArch.title = item.archived ? "Ripristina" : "Archivia";
 
-            document.getElementById('btn-delete').onclick = () => { if(confirm("Eliminare?")) { db = db.filter(x => x.id != id); localStorage.setItem('univertrak_v6', JSON.stringify(db)); showHome(); } };
-            
-            try {
-                const res = await fetch(`https://api.trackingmore.com/v4/trackings/get?tracking_numbers=${item.code}`, {
-                    headers: { 'Tracking-Api-Key': API_KEY }
-                });
-                const data = await res.json();
-                const track = data.data[0];
+            const iframe = document.getElementById('tracking-iframe');
+            document.getElementById('loader').style.display = 'flex';
+            iframe.style.display = 'none';
+            iframe.src = `https://m.17track.net/en/track#nums=${item.code}`;
+            iframe.onload = () => { document.getElementById('loader').style.display = 'none'; iframe.style.display = 'block'; };
 
-                document.getElementById('det-sender').innerText = track.original_carrier || 'Corriere Internazionale';
-                document.getElementById('det-country').innerText = track.destination_country || 'Italia';
-
-                let html = '';
-                track.origin_info.trackinfo.forEach(step => {
-                    html += `
-                        <div class="timeline-line">
-                            <div class="timeline-dot"></div>
-                            <p class="text-sm font-bold text-gray-800">${step.StatusDescription}</p>
-                            <p class="text-[10px] text-gray-400 mt-1 uppercase">${step.Date}</p>
-                        </div>`;
-                });
-                document.getElementById('det-steps').innerHTML = html || '<p class="text-gray-400 text-center">Nessun passaggio trovato.</p>';
-            } catch (e) {
-                document.getElementById('det-steps').innerHTML = '<p class="text-red-400 text-center font-bold text-xs uppercase">Errore di connessione API</p>';
-            }
+            document.getElementById('home-page').classList.remove('active');
+            document.getElementById('detail-page').classList.add('active');
         }
 
-        async function render() {
-            const list = document.getElementById('home-list');
-            list.innerHTML = db.length ? '' : '<p class="text-center py-20 text-gray-300 uppercase text-[10px] font-bold tracking-widest">Nessuna spedizione</p>';
-            
-            for (let x of db) {
-                const card = document.createElement('div');
-                card.className = "card bg-white p-6 rounded-3xl cursor-pointer";
-                card.onclick = () => showDetail(x.id);
-                card.innerHTML = `
-                    <div class="flex justify-between items-center mb-4">
-                        <div>
-                            <h4 class="font-bold text-sm text-gray-900">${x.desc}</h4>
-                            <p class="text-[10px] font-mono text-gray-300 uppercase">${x.code}</p>
-                        </div>
-                        <i class="fas fa-chevron-right text-gray-100"></i>
-                    </div>
-                    <div id="last-step-${x.id}" class="text-[10px] font-bold text-[#5d8574] uppercase tracking-tight flex items-center gap-2">
-                        <span class="w-1.5 h-1.5 bg-[#5d8574] rounded-full animate-pulse"></span> Recupero stato...
-                    </div>
-                `;
-                list.appendChild(card);
-                fetchLastStep(x.code, `last-step-${x.id}`);
-            }
+        function archiveCurrent() {
+            const i = db.findIndex(x => x.id === currentId);
+            db[i].archived = !db[i].archived;
+            localStorage.setItem('ust_v8_final', JSON.stringify(db));
+            goToHome();
         }
 
-        async function fetchLastStep(code, elId) {
-            try {
-                const res = await fetch(`https://api.trackingmore.com/v4/trackings/get?tracking_numbers=${code}`, {
-                    headers: { 'Tracking-Api-Key': API_KEY }
-                });
-                const data = await res.json();
-                const last = data.data[0].origin_info.trackinfo[0].StatusDescription;
-                document.getElementById(elId).innerHTML = `<span class="w-1.5 h-1.5 bg-[#5d8574] rounded-full"></span> ${last.substring(0, 40)}...`;
-            } catch (e) {
-                document.getElementById(elId).innerHTML = `<span class="w-1.5 h-1.5 bg-gray-200 rounded-full"></span> Tracking non disponibile`;
-            }
+        function deleteCurrent() {
+            if(!confirm("Eliminare definitivamente?")) return;
+            db = db.filter(x => x.id !== currentId);
+            localStorage.setItem('ust_v8_final', JSON.stringify(db));
+            goToHome();
         }
 
-        function openAddModal() { document.getElementById('modalAdd').classList.remove('hidden'); }
-        function closeAddModal() { document.getElementById('modalAdd').classList.add('hidden'); }
-        
+        function goToHome() {
+            document.getElementById('detail-page').classList.remove('active');
+            document.getElementById('home-page').classList.add('active');
+            render();
+        }
+
         render();
     </script>
 </body>
